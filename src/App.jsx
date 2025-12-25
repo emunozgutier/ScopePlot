@@ -90,7 +90,7 @@ function App() {
     let animationFrameId;
 
     const renderLoop = () => {
-      const { timePerUnit, samplesPerSecond } = appData.controlPanelData;
+      const { timePerUnit, TotalSignalSamples } = appData.controlPanelData;
 
       timeRef.current += 0.02;
 
@@ -107,7 +107,7 @@ function App() {
             return { ...sig, voltageTimeData: [] };
           }
 
-          const count = Math.min(2000, Math.floor(10 * timePerUnit * samplesPerSecond));
+          const count = Math.min(5000, TotalSignalSamples);
 
           for (let i = 0; i < count; i++) {
             const relativeT = (i / count) * (10 * timePerUnit);
@@ -144,7 +144,7 @@ function App() {
 
     renderLoop();
     return () => cancelAnimationFrame(animationFrameId);
-  }, [appData.controlPanelData.samplesPerSecond, appData.controlPanelData.timePerUnit]);
+  }, [appData.controlPanelData.TotalSignalSamples, appData.controlPanelData.timePerUnit]);
 
   // State setters
   const setMenuBarData = (newData) => {

@@ -52,8 +52,8 @@ const Display = ({ displayData, controlPanelData }) => {
             </svg>
 
             <div className="signal-overlay">
-                <div>Time/Div: {controlPanelData.timePerUnit}s</div>
-                <div>Samples/Sec: {controlPanelData.samplesPerSecond}</div>
+                <div style={{ color: 'white' }}>Time/Div: {controlPanelData.timePerUnit}s</div>
+                <div style={{ color: 'white' }}>Total Samples: {controlPanelData.TotalSignalSamples}</div>
                 {controlPanelData.channels.map(ch => ch.visible && (
                     <div key={ch.id} style={{ color: ch.color }}>
                         CH{ch.id + 1}: {ch.voltsPerUnit}V/Div
