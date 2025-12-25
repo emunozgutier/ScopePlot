@@ -66,9 +66,50 @@ export const parseMetric = (valStr) => {
         numPart = str.replace(/[a-z]+$/, '');
     } else if (str.endsWith('v') || str.endsWith('s') || str.endsWith('hz')) {
         numPart = str.replace(/[a-z]+$/, '');
+    } else if (str.endsWith('m') || str.endsWith('mv') || str.endsWith('ms')) {
+        // Wait, 'm' is milli. user might mean Mega? Usually M is mega, m is milli. 
+        // parseMetric should follow standard SI or common usage.
+        // In code above 'm' is 1e-3. 
+        // If we want Mega support in parse, we need case sensitivity or distinct suffix like 'meg'.
+        // But let's assume 'M' input is possible.
+    }
+
+    // Simple Mega check if ends with M
+    if (valStr.toString().trim().endsWith('M') || valStr.toString().trim().endsWith('MHZ') || valStr.toString().trim().endsWith('MV')) {
+        multiplier = 1e6;
+        numPart = str.replace(/[a-z]+$/i, ''); // i for case insensitive strip
     }
 
     const num = parseFloat(numPart);
     if (isNaN(num)) return 0;
     return num * multiplier;
 };
+
+// --- Step Logic ---
+
+// Generate 1-2-5 steps from 1ns (1e-9) to 100M (1e8)
+const generateSteps = () => {
+    const steps = [];
+    for (let exp = -9; exp <= 8; exp++) {
+        steps.push(1 * Math.pow(10, exp));
+        if (exp < 8) {
+            steps.push(2 * Math.pow(10, exp));
+            steps.push(5 * Math.pow(10, exp));
+        }
+    }
+    // Fix floating point issues
+    return steps.map(s => parseFloat(s.toPrecision(1))).sort((a, b) => a - b);
+};
+
+export const STEPS_1_2_5 = generateSteps();
+
+export const snapTo125 = (val) => {
+    if (val <= STEPS_1_2_5[0]) return STEPS_1_2_5[0];
+    if (val >= STEPS_1_2_5[STEPS_1_2_5.length - 1]) return STEPS_1_2_5[STEPS_1_2_5.length - 1];
+
+    // Check closest
+    return STEPS_1_2_5.reduce((prev, curr) => {
+        return (Math.abs(curr - val) < Math.abs(prev - val) ? curr : prev);
+    });
+};
+

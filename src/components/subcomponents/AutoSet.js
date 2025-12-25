@@ -1,3 +1,5 @@
+import { snapTo125 } from './subcomponents/KnobNumber';
+
 export const performAutoSet = (controlPanelData, signalData) => {
     const visibleChannels = controlPanelData.channels.filter(ch => ch.visible);
     const activeSignals = signalData.filter(sig =>
@@ -15,7 +17,11 @@ export const performAutoSet = (controlPanelData, signalData) => {
 
     // Set Time/Div to fit maxTime in 10 units
     // If maxTime is very small (e.g. 0), keep default.
-    const newTimePerUnit = maxTime > 0 ? maxTime / 10 : controlPanelData.timePerUnit;
+    let newTimePerUnit = maxTime > 0 ? maxTime / 10 : controlPanelData.timePerUnit;
+
+    // Snap Time to 1-2-5
+    newTimePerUnit = snapTo125(newTimePerUnit);
+
 
     // 2. Voltage Logic
     const newChannels = controlPanelData.channels.map(ch => {
@@ -40,6 +46,9 @@ export const performAutoSet = (controlPanelData, signalData) => {
         // Grid Height is 8 units. We want signal to cover ~6 units?
         // Volts/Unit = Range / 6
         let newVoltsPerUnit = range > 0 ? range / 6 : 1;
+
+        // Snap Volts to 1-2-5
+        newVoltsPerUnit = snapTo125(newVoltsPerUnit);
 
         // Offset Logic:
         // Y = 4 - (v + offset) / voltsPerUnit
