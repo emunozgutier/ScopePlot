@@ -1,4 +1,4 @@
-#:root {
+:root {
   --scope-bg: #111;
   --scope-grid: #333;
   --scope-text: #0f0;
@@ -38,7 +38,8 @@ body {
   user-select: none;
 }
 
-.menu-item:hover, .menu-item.active {
+.menu-item:hover,
+.menu-item.active {
   background: #555;
   color: #fff;
 }
@@ -59,7 +60,7 @@ body {
   border: 4px solid #666;
   border-radius: 4px;
   overflow: hidden;
-  box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.8);
 }
 
 .grid-background {
@@ -68,7 +69,8 @@ body {
   background-image:
     linear-gradient(var(--scope-grid) 1px, transparent 1px),
     linear-gradient(90deg, var(--scope-grid) 1px, transparent 1px);
-  background-size: 10% 12.5%; /* 10 units wide (100%/10%), 8 units high (100%/12.5%) */
+  background-size: 10% 12.5%;
+  /* 10 units wide (100%/10%), 8 units high (100%/12.5%) */
 }
 
 .center-crosshair {
