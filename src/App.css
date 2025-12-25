@@ -95,7 +95,8 @@ body {
 
 /* Control Panel */
 .control-panel {
-  flex: 1;
+  flex: 0 0 20%;
+  min-width: 300px;
   background: var(--panel-bg);
   border-left: 1px solid var(--panel-border);
   padding: 10px;
