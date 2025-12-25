@@ -24,10 +24,15 @@ export const formatMetric = (value, unit = '') => {
         const mVal = value * 1e3;
         return `${parseFloat(mVal.toPrecision(3))} m${unit}`;
     }
-    // Kil0
-    if (absVal >= 1000) {
+    // Kilo
+    if (absVal >= 1000 && absVal < 1e6) {
         const kVal = value / 1e3;
         return `${parseFloat(kVal.toPrecision(3))} k${unit}`;
+    }
+    // Mega
+    if (absVal >= 1e6) {
+        const mVal = value / 1e6;
+        return `${parseFloat(mVal.toPrecision(3))} M${unit}`;
     }
 
     // Base unit

@@ -175,6 +175,7 @@ function App() {
         <Display
           displayData={appData.displayData}
           controlPanelData={appData.controlPanelData}
+          onUpdate={updateControlPanelData}
         />
         <ControlPanel
           controlPanelData={appData.controlPanelData}

@@ -2,9 +2,16 @@ import React from 'react';
 
 import DisplayOffsetTab from './subcomponents/DisplayOffsetTab';
 
-const Display = ({ displayData, controlPanelData }) => {
+const Display = ({ displayData, controlPanelData, onUpdate }) => {
     const widthUnits = 10;
     const heightUnits = 8;
+
+    const handleChannelUpdate = (id, updates) => {
+        const newChannels = controlPanelData.channels.map(ch =>
+            ch.id === id ? { ...ch, ...updates } : ch
+        );
+        onUpdate({ ...controlPanelData, channels: newChannels });
+    };
 
     // Helper to map data point to SVG coordinates
     const mapDataToPath = (voltageTimeData, channelSettings) => {
@@ -28,9 +35,14 @@ const Display = ({ displayData, controlPanelData }) => {
     return (
         <div style={{ display: 'flex', flex: 1, minWidth: 0, height: '100%', position: 'relative' }}>
             {/* Sidebar for Offset Tabs */}
-            <div style={{ width: '40px', height: '100%', position: 'relative', backgroundColor: '#111', borderRight: '1px solid #333', overflow: 'hidden' }}>
+            <div style={{ width: '50px', height: '100%', position: 'relative', backgroundColor: '#111', borderRight: '1px solid #333', overflow: 'hidden' }}>
                 {controlPanelData.channels.map(ch => (
-                    <DisplayOffsetTab key={ch.id} channel={ch} />
+                    <DisplayOffsetTab
+                        key={ch.id}
+                        channel={ch}
+                        onUpdate={(updates) => handleChannelUpdate(ch.id, updates)}
+                        parentHeight={0} // We need height for drag calc, but ref is better. Tab can use window or percent.
+                    />
                 ))}
             </div>
 

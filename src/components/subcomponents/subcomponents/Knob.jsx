@@ -42,19 +42,21 @@ const Knob = ({
 }) => {
     const knobRef = useRef(null);
     const valueRef = useRef(value);
+    const onChangeRef = useRef(onChange); // Stable ref for callback
     const [isHovered, setIsHovered] = useState(false);
 
     // Internal state for input to allow typing
     const [inputValue, setInputValue] = useState('');
     const [isEditing, setIsEditing] = useState(false);
 
-    // Keep ref in sync and update input if not editing
+    // Keep refs in sync
     useEffect(() => {
         valueRef.current = value;
+        onChangeRef.current = onChange; // Update ref
         if (!isEditing) {
             setInputValue(format ? format(value) : value.toString());
         }
-    }, [value, format, isEditing]);
+    }, [value, onChange, format, isEditing]);
 
     // Helper to find nearest 1-2-5 step
     const getNearest125 = (val) => {
@@ -97,12 +99,16 @@ const Knob = ({
                 newValue = parseFloat(newValue.toFixed(6)); // Higher precision for small steps
             }
 
-            onChange(newValue);
+            // Call latest callback via ref
+            if (onChangeRef.current) {
+                onChangeRef.current(newValue);
+            }
         };
 
+        // Passive false is important for preventing default scroll
         el.addEventListener('wheel', handleWheel, { passive: false });
         return () => el.removeEventListener('wheel', handleWheel);
-    }, [stepType, min, max, step, onChange]);
+    }, [stepType, min, max, step]); // Remove onChange from deps!
 
     // Angle Calculation
     let angle = 0;
