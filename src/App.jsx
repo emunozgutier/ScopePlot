@@ -1,11 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import './App.css';
 
+// ... imports
 // Components
 import MenuBar from './components/MenuBar';
 import Display from './components/Display';
 import ControlPanel from './components/ControlPanel';
 import LoadTestModal from './components/subcomponents/LoadTestModal';
+import { defaultSignal, generateBuffer } from './components/subcomponents/DisplaySignal'; // Named imports for logic
 
 // Data
 import { initialMenuBarData } from './components/MenuBarData';
@@ -24,31 +26,36 @@ function App() {
   const [appData, setAppData] = useState(initialAppData);
   const timeRef = useRef(0);
 
-  // Helper to generate signal buffer
-  const generateSignalBuffer = (config) => {
-    const { duration, sampleRate, frequency, shape, amplitude } = config;
-    const count = Math.floor(duration * sampleRate);
-    const points = [];
+  // Initialize Channel 1 with default signal on load
+  useEffect(() => {
+    const { timePerUnit, TotalSignalSamples } = initialAppData.controlPanelData;
+    const defaultBuffer = defaultSignal(timePerUnit, TotalSignalSamples);
 
-    for (let i = 0; i < count; i++) {
-      const t = i / sampleRate;
-      const phase = 0; // Static start
-      const omega = 2 * Math.PI * frequency;
-      let val = 0;
+    setAppData(prev => {
+      const newSignals = prev.displayData.signalData.map(sig => {
+        if (sig.id === 0) { // Channel 1
+          return {
+            ...sig,
+            OriginalVoltageTimeData: defaultBuffer,
+            voltageTimeData: defaultBuffer
+          };
+        }
+        return sig;
+      });
+      return {
+        ...prev,
+        displayData: {
+          ...prev.displayData,
+          signalData: newSignals
+        }
+      };
+    });
+  }, []);
 
-      if (shape === 'sine') {
-        val = Math.sin(omega * t + phase);
-      } else if (shape === 'square') {
-        val = Math.sin(omega * t + phase) > 0 ? 1 : -1;
-      } else if (shape === 'triangle') {
-        // Triangle wave approximation
-        val = (2 / Math.PI) * Math.asin(Math.sin(omega * t + phase));
-      }
+  // ... imports
 
-      points.push([t, val * amplitude]);
-    }
-    return points;
-  };
+
+  // ... (inside App)
 
   const handleSaveGenerator = (newData) => {
     // Save config and Generate Data
@@ -56,8 +63,8 @@ function App() {
     newAppData.FunctionGenSignalData = { ...newData, isOpen: false }; // Close modal
 
     if (newData.enabled) {
-      // Generate Buffer
-      const buffer = generateSignalBuffer(newData);
+      // Generate Buffer using named export
+      const buffer = generateBuffer(newData);
       const targetCh = newData.targetChannelId;
 
       // Update Signal Data with Original
