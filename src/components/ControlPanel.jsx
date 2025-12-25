@@ -1,7 +1,13 @@
 import React from 'react';
 import classNames from 'classnames';
+import { performAutoSet } from './subcomponents/AutoSet';
 
-const ControlPanel = ({ controlPanelData, onUpdate }) => {
+const ControlPanel = ({ controlPanelData, signalData, onUpdate }) => {
+    const handleAutoSet = () => {
+        const newData = performAutoSet(controlPanelData, signalData);
+        onUpdate(newData);
+    };
+
     const updateChannel = (id, updates) => {
         const newChannels = controlPanelData.channels.map(ch =>
             ch.id === id ? { ...ch, ...updates } : ch
@@ -16,7 +22,12 @@ const ControlPanel = ({ controlPanelData, onUpdate }) => {
     return (
         <div className="control-panel">
             <div className="panel-section">
-                <h3 className="panel-header">Global</h3>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                    <h3 className="panel-header" style={{ marginBottom: 0 }}>Global</h3>
+                    <button className="btn-secondary" style={{ padding: '2px 8px', fontSize: '11px' }} onClick={handleAutoSet}>
+                        Auto Set
+                    </button>
+                </div>
                 <div className="control-row">
                     <label>Time/Div (s)</label>
                     <input
@@ -38,7 +49,7 @@ const ControlPanel = ({ controlPanelData, onUpdate }) => {
             </div>
 
             {controlPanelData.channels.map(ch => (
-                <div key={ch.id} className="panel-section" style={{ borderLeft: `3px solid ${ch.color}` }}>
+                <div key={ch.id} className="panel-section" style={{ borderLeft: `3px solid ${ch.color} ` }}>
                     <div className="ch-header">
                         <h3 className="panel-header" style={{ color: ch.color }}>Channel {ch.id + 1}</h3>
                         <button

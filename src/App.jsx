@@ -5,7 +5,7 @@ import './App.css';
 import MenuBar from './components/MenuBar';
 import Display from './components/Display';
 import ControlPanel from './components/ControlPanel';
-import LoadTestModal from './components/LoadTestModal';
+import LoadTestModal from './components/subcomponents/LoadTestModal';
 
 // Data
 import { initialMenuBarData } from './components/MenuBarData';
@@ -178,6 +178,7 @@ function App() {
         />
         <ControlPanel
           controlPanelData={appData.controlPanelData}
+          signalData={appData.displayData.signalData}
           onUpdate={updateControlPanelData}
         />
       </div>
