@@ -7,12 +7,23 @@ import './App.css';
 const DEFAULT_SIGNAL_DATA = {
   id: 0,
   defaultZeroData: true,
-  voltageTimeData: [] // Array of [time, voltage]
+  voltageTimeData: [], // Array of [time, voltage]
+  OriginalVoltageTimeData: [] // Loaded/Generated static data
 };
 
 const initialAppData = {
   menuBarData: {
     activeMenu: null // 'File', 'Math', 'Help'
+  },
+  FunctionGenSignalData: {
+    isOpen: false,
+    enabled: false,
+    amplitude: 5,
+    frequency: 1,
+    shape: 'sine', // 'sine', 'line', 'square', 'triangle'
+    targetChannelId: 0,
+    duration: 1,     // Time in seconds
+    sampleRate: 100  // Samples per second
   },
   displayData: {
     signalData: [
@@ -36,18 +47,186 @@ const initialAppData = {
 
 // --- Submodules ---
 
-const MenuBar = ({ menuBarData, setMenuBarData }) => {
+const LoadTestModal = ({ data, onSave, onClose }) => {
+  const [localData, setLocalData] = useState({ ...data, periods: data.duration * data.frequency, samplesPerPeriod: data.sampleRate / data.frequency });
+
+  // Sync derived state when data opens
+  useEffect(() => {
+    setLocalData({
+      ...data,
+      periods: data.duration * data.frequency,
+      samplesPerPeriod: data.sampleRate / data.frequency
+    });
+  }, [data.isOpen]);
+
+  const handleChange = (field, value) => {
+    const newData = { ...localData, [field]: value };
+
+    // Dependent Logic
+    if (field === 'frequency') {
+      // Update Periods and SPP based on new Freq (keeping Duration and Rate const? Or keeping Periods const?)
+      // Usually if Freq changes:
+      // If we keep Duration constant -> Periods changes.
+      // If we keep Rate constant -> SPP changes.
+      newData.periods = newData.duration * value;
+      newData.samplesPerPeriod = newData.sampleRate / value;
+    }
+
+    // Time <-> Periods
+    if (field === 'duration') {
+      newData.periods = value * newData.frequency;
+    } else if (field === 'periods') {
+      newData.duration = value / (newData.frequency || 1);
+    }
+
+    // Rate <-> SPP
+    if (field === 'sampleRate') {
+      newData.samplesPerPeriod = value / (newData.frequency || 1);
+    } else if (field === 'samplesPerPeriod') {
+      newData.sampleRate = value * newData.frequency;
+    }
+
+    setLocalData(newData);
+  };
+
+  if (!data.isOpen) return null;
+
+  return (
+    <div className="modal-overlay">
+      <div className="modal-content">
+        <div className="modal-header">
+          <h2>Function Generator Load Test</h2>
+          <button className="close-btn" onClick={onClose}>×</button>
+        </div>
+
+        <div className="modal-row">
+          <label>
+            <input
+              type="checkbox"
+              checked={localData.enabled}
+              onChange={(e) => handleChange('enabled', e.target.checked)}
+            /> Enable Signal
+          </label>
+        </div>
+
+        <div className="modal-row">
+          <label>Target Channel</label>
+          <select
+            value={localData.targetChannelId}
+            onChange={(e) => handleChange('targetChannelId', parseInt(e.target.value))}
+          >
+            {[0, 1, 2, 3].map(id => <option key={id} value={id}>Channel {id + 1}</option>)}
+          </select>
+        </div>
+
+        <div className="modal-row">
+          <label>Shape</label>
+          <select
+            value={localData.shape}
+            onChange={(e) => handleChange('shape', e.target.value)}
+          >
+            <option value="sine">Sine</option>
+            <option value="square">Square</option>
+            <option value="triangle">Triangle</option>
+          </select>
+        </div>
+
+        <div className="modal-row">
+          <label>Frequency (Hz)</label>
+          <input
+            type="number" step="0.1"
+            value={localData.frequency}
+            onChange={(e) => handleChange('frequency', parseFloat(e.target.value))}
+          />
+        </div>
+
+        <div className="modal-row">
+          <label>Amplitude (V)</label>
+          <input
+            type="number" step="0.1"
+            value={localData.amplitude}
+            onChange={(e) => handleChange('amplitude', parseFloat(e.target.value))}
+          />
+        </div>
+
+        <div className="dual-input-row">
+          <div className="dual-input-group">
+            <label>Duration (s)</label>
+            <input
+              type="number" step="0.1"
+              value={localData.duration}
+              onChange={(e) => handleChange('duration', parseFloat(e.target.value))}
+            />
+          </div>
+          <div className="dual-input-group">
+            <label>Periods</label>
+            <input
+              type="number" step="0.1"
+              value={localData.periods.toFixed(2)}
+              onChange={(e) => handleChange('periods', parseFloat(e.target.value))}
+            />
+          </div>
+        </div>
+
+        <div className="dual-input-row">
+          <div className="dual-input-group">
+            <label>Sample Rate (Hz)</label>
+            <input
+              type="number" step="10"
+              value={localData.sampleRate}
+              onChange={(e) => handleChange('sampleRate', parseFloat(e.target.value))}
+            />
+          </div>
+          <div className="dual-input-group">
+            <label>Samples/Period</label>
+            <input
+              type="number" step="1"
+              value={localData.samplesPerPeriod.toFixed(2)}
+              onChange={(e) => handleChange('samplesPerPeriod', parseFloat(e.target.value))}
+            />
+          </div>
+        </div>
+
+        <div className="modal-actions">
+          <button className="btn-secondary" onClick={onClose}>Cancel</button>
+          <button className="btn-primary" onClick={() => onSave(localData)}>Apply / Load</button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// --- Submodules ---
+
+const MenuBar = ({ menuBarData, setMenuBarData, onMenuAction }) => {
   const menus = ['File', 'Math', 'Help'];
 
   return (
     <div className="menu-bar">
       {menus.map(menu => (
-        <div
-          key={menu}
-          className={classNames('menu-item', { active: menuBarData.activeMenu === menu })}
-          onClick={() => setMenuBarData({ ...menuBarData, activeMenu: menu })}
-        >
-          {menu}
+        <div key={menu} style={{ position: 'relative' }}>
+          <div
+            className={classNames('menu-item', { active: menuBarData.activeMenu === menu })}
+            onClick={() => setMenuBarData({ ...menuBarData, activeMenu: menuBarData.activeMenu === menu ? null : menu })}
+          >
+            {menu}
+          </div>
+          {menu === 'File' && menuBarData.activeMenu === 'File' && (
+            <div
+              style={{
+                position: 'absolute', top: '100%', left: 0,
+                background: '#333', border: '1px solid #555',
+                zIndex: 100, width: '150px'
+              }}
+            >
+              <div
+                className="menu-item"
+                onClick={() => { onMenuAction('loadTest'); setMenuBarData({ ...menuBarData, activeMenu: null }); }}
+              >
+                Load Test...
+              </div>
+            </div>
+          )}
         </div>
       ))}
     </div>
@@ -68,25 +247,15 @@ const Display = ({ displayData, controlPanelData }) => {
     if (!voltageTimeData || voltageTimeData.length === 0) return '';
 
     const { voltsPerUnit, offset } = channelSettings;
-    // We only show data that fits in the current time window approximately?
-    // Or we just map the time directly. 
-    // Let's assume time starts at the first point's time or we just map 0-10 units relative to "now".
-    // For this simulation, we'll map the last N seconds.
-    // Actually, user said "Samples/Seconds that represents the points currently on the plot".
-    // So voltageTimeData contains exactly what is on the plot.
 
-    // Y-calculation:
-    // Screen Center is Y=4.
-    // +1V input with 1V/Unit should be at Y=3 (Up).
-    // Y = 4 - (Voltage + Offset) / VoltsPerUnit
-
-    // X-calculation:
-    // Data is (time, voltage). We need to normalize time to 0-10 range.
-    // If we assume data comes in correct window.
     if (voltageTimeData.length < 2) return '';
 
     const points = voltageTimeData.map(([t, v]) => {
       // For X, assuming t goes from 0 to 10 * timePerUnit
+      // But if we are in "Load Test" mode, we might have static data that spans e.g. 1 second.
+      // And timePerUnit might be 0.1s.
+      // So we map real time 't' to screen X.
+
       const x = (t / controlPanelData.timePerUnit);
       const y = 4 - (v + offset) / voltsPerUnit;
       return `${x},${y}`;
@@ -94,6 +263,9 @@ const Display = ({ displayData, controlPanelData }) => {
 
     return `M ${points.join(' L ')}`;
   };
+
+  // ... rest of Display is similar but we need to ensure mapDataToPath is robust
+
 
   return (
     <div className="scope-display">
@@ -232,83 +404,148 @@ function App() {
   const [appData, setAppData] = useState(initialAppData);
   const timeRef = useRef(0);
 
+  // Helper to generate signal buffer
+  const generateSignalBuffer = (config) => {
+    const { duration, sampleRate, frequency, shape, amplitude } = config;
+    const count = Math.floor(duration * sampleRate);
+    const points = [];
+
+    for (let i = 0; i < count; i++) {
+      const t = i / sampleRate;
+      const phase = 0; // Static start
+      const omega = 2 * Math.PI * frequency;
+      let val = 0;
+
+      if (shape === 'sine') {
+        val = Math.sin(omega * t + phase);
+      } else if (shape === 'square') {
+        val = Math.sin(omega * t + phase) > 0 ? 1 : -1;
+      } else if (shape === 'triangle') {
+        // Triangle wave approximation
+        val = (2 / Math.PI) * Math.asin(Math.sin(omega * t + phase));
+      }
+
+      points.push([t, val * amplitude]);
+    }
+    return points;
+  };
+
+  const handleSaveGenerator = (newData) => {
+    // Save config and Generate Data
+    const newAppData = { ...appData };
+    newAppData.FunctionGenSignalData = { ...newData, isOpen: false }; // Close modal
+
+    if (newData.enabled) {
+      // Generate Buffer
+      const buffer = generateSignalBuffer(newData);
+      const targetCh = newData.targetChannelId;
+
+      // Update Signal Data with Original
+      newAppData.displayData.signalData = newAppData.displayData.signalData.map(sig => {
+        if (sig.id === targetCh) {
+          return {
+            ...sig,
+            OriginalVoltageTimeData: buffer,
+            voltageTimeData: buffer // Display immediately
+          };
+        }
+        return sig;
+      });
+
+      // Ensure Channel is visible
+      const channelConfig = newAppData.controlPanelData.channels.find(c => c.id === targetCh);
+      if (!channelConfig.visible) {
+        newAppData.controlPanelData.channels = newAppData.controlPanelData.channels.map(c =>
+          c.id === targetCh ? { ...c, visible: true } : c
+        );
+      }
+    }
+
+    setAppData(newAppData);
+  };
+
   // Simulation Loop
   useEffect(() => {
     let animationFrameId;
 
     const renderLoop = () => {
-      // Advance time
-      // We want to generate data points based on Samples/Second.
-      // But for a smooth 60fps animation, we might just generate a chunk of data.
-
-      // Let's create a sliding window of data based on Grid Width (10 units) * TimePerUnit.
       const { timePerUnit, samplesPerSecond } = appData.controlPanelData;
-      const totalTimeSpan = 10 * timePerUnit;
-      const numPoints = Math.floor(totalTimeSpan * samplesPerSecond / 10); // Scale down points for perf if needed, but user asked for Samples/Sec to strictly represent points.
 
-      // Actually, let's just generate 'numPoints' distributed over 0 to 10*timePerUnit for the visual frame.
-      // To simulate scrolling, we shift the phase.
+      // If we simply want to ANIMATE, we update timeRef.
+      // But for loaded static signals, we might NOT want to animate them shift?
+      // Or maybe we do? A scope triggers...
+      // User said "Load Test", implying a static load.
+      // If OriginalVoltageTimeData is setup, we just keep it?
+      // BUT existing logic in Display maps `t` / timePerUnit.
+      // If we don't shift `t` in the data, it stays static on screen (relative to 0).
+      // So if we don't touch `OriginalVoltageTimeData`, it stays static.
 
-      timeRef.current += 0.02; // Arbitrary "real time" advancement
+      // We only need to simulate channels that DO NOT have OriginalVoltageTimeData (or if generator is disabled for them?)
+      // Current sim logic generates fresh points every frame.
 
-      const newSignals = appData.displayData.signalData.map(sig => {
-        // Only generate data if channel is active (or always? "up to 4").
-        // We'll generate for all to keep state valid, optimization later.
+      timeRef.current += 0.02;
 
-        const points = [];
-        const chSettings = appData.controlPanelData.channels.find(c => c.id === sig.id);
-        if (!chSettings || !chSettings.visible) {
-          return { ...sig, voltageTimeData: [] };
-        }
+      setAppData(prev => {
+        const newSignals = prev.displayData.signalData.map(sig => {
+          // If we have loaded data, just return it (or subset?)
+          // For now, return full buffer. Display handles clipping via viewport? 
+          // SVG will draw everything. If buffer is huge, might be slow.
+          // But for "Load Test" usually it's limited duration.
 
-        const count = Math.min(2000, Math.floor(10 * timePerUnit * samplesPerSecond));
-        // 10 units of time * S/s -> total samples visible.
-        // Cap at 2000 for performance start.
-
-        for (let i = 0; i < count; i++) {
-          // t is relative logic time on screen (0 to 10 * div)
-          // Actually X axis on SVG is 0-10.
-          // mapped t should be 0 to 10*timePerUnit
-          const relativeT = (i / count) * (10 * timePerUnit);
-
-          // Simulation Logic
-          let val = 0;
-          const phase = timeRef.current * 5; // animation speed
-          // Base frequency
-          const freq = 1 + sig.id; // Different per channel
-
-          if (sig.id === 0) { // Sine
-            val = Math.sin(relativeT * freq + phase);
-          } else if (sig.id === 1) { // Square
-            val = Math.sin(relativeT * freq + phase) > 0 ? 1 : -1;
-          } else if (sig.id === 2) { // Triangle
-            val = Math.asin(Math.sin(relativeT * freq + phase));
-          } else { // Noise or something
-            val = (Math.random() - 0.5);
+          if (sig.OriginalVoltageTimeData && sig.OriginalVoltageTimeData.length > 0) {
+            return sig; // Don't re-simulate
           }
 
-          if (chSettings.noiseFilter) val *= 0.5; // Simple "filter" visual
+          // Normal Simulation Logic (Fallback)
+          const points = [];
+          const chSettings = prev.controlPanelData.channels.find(c => c.id === sig.id);
+          if (!chSettings || !chSettings.visible) {
+            return { ...sig, voltageTimeData: [] };
+          }
 
-          points.push([relativeT, val * 3]); // *3 to make it visible
-        }
+          const count = Math.min(2000, Math.floor(10 * timePerUnit * samplesPerSecond));
 
-        return { ...sig, voltageTimeData: points };
+          for (let i = 0; i < count; i++) {
+            const relativeT = (i / count) * (10 * timePerUnit);
+            let val = 0;
+            const phase = timeRef.current * 5;
+            const freq = 1 + sig.id;
+
+            if (sig.id === 0) {
+              val = Math.sin(relativeT * freq + phase);
+            } else if (sig.id === 1) {
+              val = Math.sin(relativeT * freq + phase) > 0 ? 1 : -1;
+            } else if (sig.id === 2) {
+              val = Math.asin(Math.sin(relativeT * freq + phase));
+            } else {
+              val = (Math.random() - 0.5);
+            }
+            if (chSettings.noiseFilter) val *= 0.5;
+            points.push([relativeT, val * 3]);
+          }
+          return { ...sig, voltageTimeData: points };
+        });
+
+        // Optimization: Only update if changed? 
+        // Logic above always creates new array for simulated ones.
+        return {
+          ...prev,
+          displayData: {
+            ...prev.displayData,
+            signalData: newSignals
+          }
+        };
       });
-
-      setAppData(prev => ({
-        ...prev,
-        displayData: {
-          ...prev.displayData,
-          signalData: newSignals
-        }
-      }));
 
       animationFrameId = requestAnimationFrame(renderLoop);
     };
 
     renderLoop();
     return () => cancelAnimationFrame(animationFrameId);
-  }, [appData.controlPanelData]); // Re-create loop if fundamental params change
+  }, [appData.controlPanelData.samplesPerSecond, appData.controlPanelData.timePerUnit]);
+  // Dependency note: if we didn't include other deps, closure might be stale, 
+  // but we use functional update form `setAppData(prev => ...)` so we are safe on state.
+  // We strictly need to restart loop if `samplesPerSecond` changes to init correct count logic if we relied on external constants.
 
   // State setters
   const setMenuBarData = (newData) => {
@@ -319,11 +556,21 @@ function App() {
     setAppData(prev => ({ ...prev, controlPanelData: newData }));
   };
 
+  const handleMenuAction = (action) => {
+    if (action === 'loadTest') {
+      setAppData(prev => ({
+        ...prev,
+        FunctionGenSignalData: { ...prev.FunctionGenSignalData, isOpen: true }
+      }));
+    }
+  };
+
   return (
     <div className="app-container">
       <MenuBar
         menuBarData={appData.menuBarData}
         setMenuBarData={setMenuBarData}
+        onMenuAction={handleMenuAction}
       />
       <div className="main-workspace">
         <Display
@@ -335,6 +582,11 @@ function App() {
           onUpdate={updateControlPanelData}
         />
       </div>
+      <LoadTestModal
+        data={appData.FunctionGenSignalData}
+        onSave={handleSaveGenerator}
+        onClose={() => setAppData(prev => ({ ...prev, FunctionGenSignalData: { ...prev.FunctionGenSignalData, isOpen: false } }))}
+      />
     </div>
   );
 }
