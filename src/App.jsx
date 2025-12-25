@@ -33,14 +33,11 @@ function App() {
 
     setAppData(prev => {
       const newSignals = prev.displayData.signalData.map(sig => {
-        if (sig.id === 0) { // Channel 1
-          return {
-            ...sig,
-            OriginalVoltageTimeData: defaultBuffer,
-            voltageTimeData: defaultBuffer
-          };
-        }
-        return sig;
+        return {
+          ...sig,
+          OriginalVoltageTimeData: defaultBuffer,
+          voltageTimeData: defaultBuffer
+        };
       });
       return {
         ...prev,
