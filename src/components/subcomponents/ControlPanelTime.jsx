@@ -1,41 +1,57 @@
 import React from 'react';
 import Knob from './subcomponents/Knob';
-import { formatMetric } from './subcomponents/KnobNumber';
 
-const ControlPanelTime = ({ controlPanelData, onUpdate }) => {
-    const updateGlobal = (key, val) => {
-        onUpdate({ ...controlPanelData, [key]: val });
+const ControlPanelTime = ({ controlPanelData, onUpdate, maxSamples }) => {
+    const { timePerUnit, TotalSignalSamples, timeOffset } = controlPanelData;
+
+    const updateGlobal = (key, value) => {
+        onUpdate({
+            ...controlPanelData,
+            [key]: value
+        });
     };
 
     return (
-        <div className="panel-section" style={{ borderLeft: `3px solid white` }}>
-            <div className="ch-header">
-                <h3 className="panel-header" style={{ color: 'white' }}>Time</h3>
-            </div>
-            <div className="channel-controls" style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', width: '100%', padding: '5px' }}>
-
-                {/* Spacer to match Channel Buttons column */}
-                <div className="control-column" style={{ width: '50px', display: 'flex', flexDirection: 'column' }}></div>
-
-                <div className="knobs-row" style={{ display: 'flex', gap: '80px', flex: 1, justifyContent: 'center' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <h3 style={{ margin: 0, color: 'white', borderBottom: '1px solid #555', paddingBottom: '5px' }}>Time</h3>
+            <div style={{ display: 'flex', justifyContent: 'space-around' }}>
+                <Knob
+                    label="Time/Div"
+                    value={timePerUnit}
+                    onChange={(val) => updateGlobal('timePerUnit', val)}
+                    stepType="1-2-5"
+                    min={0.001}
+                    max={100}
+                    unit="s"
+                />
+                <Knob
+                    label="Offset"
+                    value={timeOffset || 0}
+                    onChange={(val) => updateGlobal('timeOffset', val)}
+                    step={0.1 * timePerUnit} // Step relative to scale
+                    min={-100}
+                    max={100}
+                    unit="s"
+                />
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                     <Knob
-                        label="Time/Div"
-                        value={controlPanelData.timePerUnit}
-                        onChange={(val) => updateGlobal('timePerUnit', val)}
-                        stepType="1-2-5"
-                        color="white"
-                        format={(v) => formatMetric(v, 's')}
-                    />
-                    <Knob
-                        label="Total Samples"
-                        value={controlPanelData.TotalSignalSamples}
-                        onChange={(val) => updateGlobal('TotalSignalSamples', val)}
+                        label="Samples"
+                        value={TotalSignalSamples}
+                        onChange={(val) => {
+                            // Ensure we don't exceed maxSamples if provided
+                            const clamped = maxSamples ? Math.min(val, maxSamples) : val;
+                            updateGlobal('TotalSignalSamples', clamped);
+                        }}
+                        step={10}
                         min={10}
-                        max={100e6}
-                        stepType="1-2-5"
-                        color="white"
-                        format={(v) => formatMetric(v, 'Sa')}
+                        max={maxSamples || 5000}
+                        stepType="linear"
                     />
+                    {maxSamples && (
+                        <div style={{ fontSize: '10px', color: '#aaa', marginTop: '2px' }}>
+                            Max: {maxSamples}
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

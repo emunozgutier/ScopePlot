@@ -8,13 +8,13 @@ import DisplayPoint from './subcomponents/DisplayPoint';
 const DisplaySignal = ({ signal, controlPanelData }) => {
     const { voltageTimeData, id } = signal;
     const { voltsPerUnit, offset, color, visible } = controlPanelData.channels.find(ch => ch.id === id) || {};
-    const { timePerUnit } = controlPanelData;
+    const { timePerUnit, timeOffset } = controlPanelData;
 
     if (!visible || !voltageTimeData || voltageTimeData.length < 2) return null;
 
     // Map data to SVG coordinates
     const points = voltageTimeData.map(([t, v]) => {
-        const x = (t / timePerUnit);
+        const x = ((t + (timeOffset || 0)) / timePerUnit);
         const y = 4 - (v + offset) / voltsPerUnit;
         return { x, y };
     });
