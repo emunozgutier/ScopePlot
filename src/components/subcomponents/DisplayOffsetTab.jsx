@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 
-const DisplayOffsetTab = ({ channel, onUpdate }) => {
+const DisplayOffsetTab = ({ channel, onUpdate, parentHeight }) => {
     const { id, offset, voltsPerUnit, color, visible } = channel;
     const [isDragging, setIsDragging] = useState(false);
 
@@ -40,9 +40,7 @@ const DisplayOffsetTab = ({ channel, onUpdate }) => {
         const startOffset = offset;
         lastSentOffsetRef.current = offset; // Sync
 
-        const container = e.target.offsetParent; // The sidebar div
-        if (!container) return;
-        const containerHeight = container.clientHeight;
+        const containerHeight = parentHeight || e.target.offsetParent?.clientHeight || 600; // Fallback
 
         const handleMouseMove = (moveEvent) => {
             // 1. Calculate raw movement
@@ -85,7 +83,7 @@ const DisplayOffsetTab = ({ channel, onUpdate }) => {
 
         window.addEventListener('mousemove', handleMouseMove);
         window.addEventListener('mouseup', handleMouseUp);
-    }, [offset, voltsPerUnit, onUpdate, minOffset, maxOffset]);
+    }, [offset, voltsPerUnit, onUpdate, minOffset, maxOffset, parentHeight]);
 
     // --- Styles ---
     const pointerSize = 6;

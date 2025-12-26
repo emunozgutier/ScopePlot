@@ -11,16 +11,36 @@ const Display = ({ displayData, controlPanelData, onUpdate }) => {
 
     // Removed manual mapDataToPath as it is now inside DisplaySignal
 
+    const sidebarRef = React.useRef(null);
+    const [sidebarHeight, setSidebarHeight] = React.useState(0);
+
+    React.useEffect(() => {
+        if (!sidebarRef.current) return;
+
+        const updateHeight = () => {
+            if (sidebarRef.current) {
+                setSidebarHeight(sidebarRef.current.clientHeight);
+            }
+        };
+
+        updateHeight();
+        window.addEventListener('resize', updateHeight);
+        return () => window.removeEventListener('resize', updateHeight);
+    }, []);
+
     return (
         <div style={{ display: 'flex', flex: 1, minWidth: 0, height: '100%', position: 'relative' }}>
-            {/* Sidebar ... */}
-            <div style={{ width: '50px', height: '100%', position: 'relative', backgroundColor: '#111', borderRight: '1px solid #333', overflow: 'hidden' }}>
+            {/* Sidebar for Offset Tabs */}
+            <div
+                ref={sidebarRef}
+                style={{ width: '50px', height: '100%', position: 'relative', backgroundColor: '#111', borderRight: '1px solid #333', overflow: 'hidden' }}
+            >
                 {controlPanelData.channels.map(ch => (
                     <DisplayOffsetTab
                         key={ch.id}
                         channel={ch}
                         onUpdate={(updates) => handleChannelUpdate(ch.id, updates)}
-                        parentHeight={0}
+                        parentHeight={sidebarHeight}
                     />
                 ))}
             </div>
