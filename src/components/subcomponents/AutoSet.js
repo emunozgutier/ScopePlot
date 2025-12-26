@@ -59,9 +59,18 @@ export const performAutoSet = (controlPanelData, signalData) => {
         return { ...ch, voltsPerUnit: newVoltsPerUnit, offset: newOffset };
     });
 
+    // Compute min time for offset
+    let minTime = Infinity;
+    activeSignals.forEach(sig => {
+        const firstPoint = sig.voltageTimeData[0];
+        if (firstPoint && firstPoint[0] < minTime) minTime = firstPoint[0];
+    });
+    const newTimeOffset = minTime !== Infinity ? -minTime : 0;
+
     return {
         ...controlPanelData,
         timePerUnit: newTimePerUnit,
+        timeOffset: newTimeOffset,
         channels: newChannels
     };
 };

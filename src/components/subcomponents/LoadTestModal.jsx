@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 
 const LoadTestModal = ({ data, onSave, onClose }) => {
-    const [localData, setLocalData] = useState({ ...data, periods: data.duration * data.frequency, samplesPerPeriod: data.sampleRate / data.frequency });
+    const [localData, setLocalData] = useState({ ...data, periods: 10, samplesPerPeriod: 1000 });
 
     // Sync derived state when data opens
     useEffect(() => {
