@@ -70,7 +70,7 @@ const DisplaySignal = ({ displaySignalData, setDisplaySignalData, controlPanelDa
                 vectorEffect="non-scaling-stroke"
             />
             {/* The Data Points - Optional: Hide for large FFT? */}
-            {points.length < 200 && points.map((p, index) => (
+            {points.length < 5000 && points.map((p, index) => (
                 <DisplayPoint
                     key={index}
                     x={p.x}
