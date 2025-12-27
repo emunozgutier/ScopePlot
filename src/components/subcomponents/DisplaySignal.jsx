@@ -5,10 +5,12 @@ import DisplayPoint from './subcomponents/DisplayPoint';
  * DisplaySignal Component
  * Renders an oscilloscope signal trace and its data points.
  */
-const DisplaySignal = ({ signal, controlPanelData, showFrequency }) => {
-    const { id } = signal;
+const DisplaySignal = ({ displaySignalData, setDisplaySignalData, controlPanelData }) => {
+    const { id } = displaySignalData;
     const { voltsPerUnit, offset, color, visible } = controlPanelData.channels.find(ch => ch.id === id) || {};
     const { timePerUnit, timeOffset, TotalSignalSamples, timeDomain } = controlPanelData;
+
+    const showFrequency = !timeDomain;
 
     if (!visible) return null;
 
@@ -20,7 +22,7 @@ const DisplaySignal = ({ signal, controlPanelData, showFrequency }) => {
     if (showFrequency && !timeDomain) {
         // --- Frequency Domain ---
         // Access frequencyData directly from signal
-        const chFreqData = signal.frequencyData;
+        const chFreqData = displaySignalData.frequencyData;
         if (!chFreqData || !chFreqData.data) return null;
 
         const data = chFreqData.data;
@@ -44,11 +46,10 @@ const DisplaySignal = ({ signal, controlPanelData, showFrequency }) => {
 
     } else {
         // --- Time Domain ---
-        // Access timeData from signal
-        const tData = signal.timeData;
-        if (!tData || !tData.voltageTimeData || tData.voltageTimeData.length < 2) return null;
+        const { voltageTimeData } = displaySignalData.timeData || {};
+        if (!voltageTimeData || voltageTimeData.length < 2) return null;
 
-        points = tData.voltageTimeData.map(([t, v]) => {
+        points = voltageTimeData.map(([t, v]) => {
             const x = ((t + (timeOffset || 0)) / timePerUnit);
             const y = 4 - (v + offset) / voltsPerUnit;
             return { x, y };

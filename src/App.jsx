@@ -8,7 +8,7 @@ import Display from './components/Display';
 import ControlPanel from './components/ControlPanel';
 import LoadTestModal from './components/subcomponents/LoadTestModal';
 import { defaultSignal, generateBuffer } from './components/subcomponents/DisplaySignal';
-import { computeFFT } from './components/subcomponents/fft';
+
 
 
 // Data
@@ -65,35 +65,8 @@ function App() {
       const isTimeDomain = prev.controlPanelData.timeDomain;
       const newTimeDomain = !isTimeDomain;
 
-      let newSignals = prev.displayData.signalData;
-
-      if (!newTimeDomain) {
-        // Switching to Frequency Domain -> Compute FFT
-        const { timePerUnit, TotalSignalSamples } = prev.controlPanelData;
-        const totalTime = timePerUnit * 10;
-        const sampleRate = TotalSignalSamples / totalTime;
-
-        const activeChannels = prev.controlPanelData.channels.filter(ch => ch.visible);
-
-        newSignals = prev.displayData.signalData.map(sig => {
-          const isActive = activeChannels.find(ch => ch.id === sig.id);
-          if (isActive) {
-            // Use timeData for input
-            if (!sig.timeData || !sig.timeData.voltageTimeData) return sig;
-
-            const fft = computeFFT(sig.timeData.voltageTimeData, sampleRate);
-            return { ...sig, frequencyData: { id: sig.id, data: fft } };
-          }
-          return sig; // No change for inactive
-        });
-      }
-
       return {
         ...prev,
-        displayData: {
-          ...prev.displayData,
-          signalData: newSignals
-        },
         controlPanelData: {
           ...prev.controlPanelData,
           timeDomain: newTimeDomain
@@ -216,32 +189,11 @@ function App() {
           return { ...sig, timeData: newT };
         });
 
-        // Loop: Check if we need to update freq data dynamically?
-        // For now only on toggle as per previous logic, or maybe we want live FFT?
-        // User didn't specify live FFT, so stick to toggle logic for performance, 
-        // OR re-compute if timeDomain is false?
-        // Actually, if sim is running, FFT should update.
-        // Let's add live FFT update if !timeDomain.
-
-        let finalSignals = newSignals;
-        if (!timeDomain) {
-          const totalTime = timePerUnit * 10;
-          const sampleRate = TotalSignalSamples / totalTime;
-          finalSignals = newSignals.map(sig => {
-            const chSettings = prev.controlPanelData.channels.find(c => c.id === sig.id);
-            if (chSettings && chSettings.visible && sig.timeData.voltageTimeData.length > 0) {
-              const fft = computeFFT(sig.timeData.voltageTimeData, sampleRate);
-              return { ...sig, frequencyData: { id: sig.id, data: fft } };
-            }
-            return sig;
-          });
-        }
-
         return {
           ...prev,
           displayData: {
             ...prev.displayData,
-            signalData: finalSignals
+            signalData: newSignals
           }
         };
       });
@@ -253,6 +205,28 @@ function App() {
     return () => cancelAnimationFrame(animationFrameId);
   }, [appData.controlPanelData.TotalSignalSamples, appData.controlPanelData.timePerUnit, appData.controlPanelData.timeDomain]); // added timeDomain dependency
 
+
+  // Handler for individual signal updates from DisplaySignal
+  const updateSignalData = (signalId, newData) => {
+    setAppData(prev => {
+      const newSignals = prev.displayData.signalData.map(sig => {
+        if (sig.id === signalId) {
+          // Determine if we are updating a specific property or replacing
+          // Assuming shallow merge for properties
+          return { ...sig, ...newData };
+        }
+        return sig;
+      });
+
+      return {
+        ...prev,
+        displayData: {
+          ...prev.displayData,
+          signalData: newSignals
+        }
+      };
+    });
+  };
 
   return (
     <div className="app-container">
@@ -266,6 +240,7 @@ function App() {
           displayData={appData.displayData}
           controlPanelData={appData.controlPanelData}
           onUpdate={updateControlPanelData}
+          onSignalUpdate={updateSignalData}
           showFrequency={!appData.controlPanelData.timeDomain}
         />
         <ControlPanel

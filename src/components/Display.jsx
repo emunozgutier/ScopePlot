@@ -3,7 +3,7 @@ import React from 'react';
 import DisplayOffsetTab from './subcomponents/DisplayOffsetTab';
 import DisplaySignal from './subcomponents/DisplaySignal';
 
-const Display = ({ displayData, controlPanelData, onUpdate, showFrequency }) => {
+const Display = ({ displayData, controlPanelData, onUpdate, onSignalUpdate, showFrequency }) => {
     const widthUnits = 10;
     const heightUnits = 8;
 
@@ -59,9 +59,9 @@ const Display = ({ displayData, controlPanelData, onUpdate, showFrequency }) => 
                     {displayData.signalData.map((sig) => (
                         <DisplaySignal
                             key={sig.id}
-                            signal={sig}
+                            displaySignalData={sig}
+                            setDisplaySignalData={(newData) => onSignalUpdate && onSignalUpdate(sig.id, newData)}
                             controlPanelData={controlPanelData}
-                            showFrequency={showFrequency}
                         />
                     ))}
                 </svg>
