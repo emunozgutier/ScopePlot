@@ -5,19 +5,58 @@ import DisplayPoint from './subcomponents/DisplayPoint';
  * DisplaySignal Component
  * Renders an oscilloscope signal trace and its data points.
  */
-const DisplaySignal = ({ signal, controlPanelData }) => {
-    const { voltageTimeData, id } = signal;
+const DisplaySignal = ({ signal, controlPanelData, showFrequency, frequencyData }) => {
+    const { id } = signal;
     const { voltsPerUnit, offset, color, visible } = controlPanelData.channels.find(ch => ch.id === id) || {};
-    const { timePerUnit, timeOffset } = controlPanelData;
+    const { timePerUnit, timeOffset, TotalSignalSamples } = controlPanelData;
 
-    if (!visible || !voltageTimeData || voltageTimeData.length < 2) return null;
+    if (!visible) return null;
 
-    // Map data to SVG coordinates
-    const points = voltageTimeData.map(([t, v]) => {
-        const x = ((t + (timeOffset || 0)) / timePerUnit);
-        const y = 4 - (v + offset) / voltsPerUnit;
-        return { x, y };
-    });
+    let points = [];
+
+    if (showFrequency && frequencyData) {
+        // --- Frequency Domain ---
+        const chFreqData = frequencyData.find(d => d.id === id);
+        if (!chFreqData || !chFreqData.data) return null;
+
+        const data = chFreqData.data;
+        // X-Axis: Frequency
+        // Max Frequency = SampleRate / 2
+        // SampleRate = TotalSamples / TotalTime
+        // TotalTime = timePerUnit * 10
+        const totalTime = timePerUnit * 10;
+        const maxFreq = (TotalSignalSamples / totalTime) / 2;
+
+        // Map Frequency to SVG X (0 to 10 units)
+        // Map Magnitude to SVG Y (0 to 8 units) based on scaling?
+        // Let's assume some auto-scaling or fixed scaling for now.
+        // For visualizing, let's normalize freq to width (10 units)
+
+        points = data.map((d) => {
+            // x: 0 to 10
+            // d.freq goes from 0 to maxFreq
+            const x = (d.freq / maxFreq) * 10;
+
+            // y: Magnitude.
+            // We can use voltsPerUnit as a scaling factor?
+            // Or fixed scaling. Let's use voltsPerUnit for "Mag/Div" logic
+            // Center at baseline? Freq is usually positive, so bottom up.
+            const y = 8 - (d.magnitude * 10); // Arbitrary scaling for visibility
+
+            return { x, y };
+        });
+
+    } else {
+        // --- Time Domain ---
+        const { voltageTimeData } = signal;
+        if (!voltageTimeData || voltageTimeData.length < 2) return null;
+
+        points = voltageTimeData.map(([t, v]) => {
+            const x = ((t + (timeOffset || 0)) / timePerUnit);
+            const y = 4 - (v + offset) / voltsPerUnit;
+            return { x, y };
+        });
+    }
 
     // Create Path String
     const pathD = `M ${points.map(p => `${p.x},${p.y}`).join(' L ')}`;
@@ -32,14 +71,14 @@ const DisplaySignal = ({ signal, controlPanelData }) => {
                 strokeWidth="0.05"
                 vectorEffect="non-scaling-stroke"
             />
-            {/* The Data Points */}
-            {points.map((p, index) => (
+            {/* The Data Points - Optional: Hide for large FFT? */}
+            {points.length < 200 && points.map((p, index) => (
                 <DisplayPoint
                     key={index}
                     x={p.x}
                     y={p.y}
                     color={color}
-                    radius={0.025} // Halved radius
+                    radius={0.025}
                 />
             ))}
         </g>

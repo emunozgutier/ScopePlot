@@ -10,14 +10,6 @@ import LoadTestModal from './components/subcomponents/LoadTestModal';
 import { defaultSignal, generateBuffer } from './components/subcomponents/DisplaySignal';
 import { computeFFT } from './components/subcomponents/fft';
 
-// later in JSX return
-<Display
-  displayData={appData.displayData}
-  controlPanelData={appData.controlPanelData}
-  onUpdate={updateControlPanelData}
-  showFrequency={showFrequency}
-  frequencyData={frequencyData}
-/>
 
 // Data
 import { initialMenuBarData } from './components/MenuBarData';
@@ -48,8 +40,8 @@ function App() {
       const sig = appData.displayData.signalData.find(s => s.id === ch.id);
       if (!sig || !sig.voltageTimeData) return { id: ch.id, data: [] };
       // Placeholder for actual FFT computation
-      // const fft = computeFFT(sig.voltageTimeData, sampleRate);
-      const fft = []; // Replace with actual FFT result
+      const fft = computeFFT(sig.voltageTimeData, sampleRate);
+      console.log('FFT Output for Ch:', ch.id, fft.length, 'bins');
       return { id: ch.id, data: fft };
     });
     setFrequencyData(freqData);

@@ -3,7 +3,7 @@ import React from 'react';
 import DisplayOffsetTab from './subcomponents/DisplayOffsetTab';
 import DisplaySignal from './subcomponents/DisplaySignal';
 
-const Display = ({ displayData, controlPanelData, onUpdate }) => {
+const Display = ({ displayData, controlPanelData, onUpdate, showFrequency, frequencyData }) => {
     const widthUnits = 10;
     const heightUnits = 8;
 
@@ -61,16 +61,31 @@ const Display = ({ displayData, controlPanelData, onUpdate }) => {
                             key={sig.id}
                             signal={sig}
                             controlPanelData={controlPanelData}
+                            showFrequency={showFrequency}
+                            frequencyData={frequencyData}
                         />
                     ))}
                 </svg>
 
-                {/* Overlay ... */}
-                <div style={{ color: 'white' }}>Time/Div: {controlPanelData.timePerUnit}s</div>
-                <div style={{ color: 'white' }}>Total Samples: {controlPanelData.TotalSignalSamples}</div>
+                {/* Overlay */}
+                <div style={{ color: 'white' }}>
+                    {showFrequency
+                        ? `Freq/Div: ${(controlPanelData.TotalSignalSamples / (controlPanelData.timePerUnit * 10 * 10)).toFixed(1)} Hz`
+                        : `Time/Div: ${controlPanelData.timePerUnit}s`
+                    }
+                </div>
+                <div style={{ color: 'white' }}>
+                    {showFrequency
+                        ? `Max Freq: ${(controlPanelData.TotalSignalSamples / (controlPanelData.timePerUnit * 10) / 2).toFixed(1)} Hz`
+                        : `Total Samples: ${controlPanelData.TotalSignalSamples}`
+                    }
+                </div>
                 {controlPanelData.channels.map(ch => ch.visible && (
                     <div key={ch.id} style={{ color: ch.color }}>
-                        CH{ch.id + 1}: {ch.voltsPerUnit}V/Div
+                        {showFrequency
+                            ? `CH${ch.id + 1}: Mag/Div`
+                            : `CH${ch.id + 1}: ${ch.voltsPerUnit}V/Div`
+                        }
                     </div>
                 ))}
             </div>
