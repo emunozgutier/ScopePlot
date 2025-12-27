@@ -8,7 +8,12 @@ const Display = ({ displayData, controlPanelData, onUpdate, onSignalUpdate }) =>
     const heightUnits = 8;
     const showFrequency = !controlPanelData.timeDomain;
 
-    // ... (keep handleChannelUpdate)
+    const handleChannelUpdate = (channelId, updates) => {
+        const newChannels = controlPanelData.channels.map(ch =>
+            ch.id === channelId ? { ...ch, ...updates } : ch
+        );
+        onUpdate({ ...controlPanelData, channels: newChannels });
+    };
 
     // Removed manual mapDataToPath as it is now inside DisplaySignal
 
