@@ -54,7 +54,7 @@ const Display = ({ displayData, controlPanelData, onUpdate, onSignalUpdate }) =>
             {/* Main Display Area */}
             <div className="scope-display" style={{ flex: 1, position: 'relative' }}>
                 <div className="grid-background" />
-                <div className="center-crosshair" />
+
 
                 <svg
                     viewBox={`0 0 ${widthUnits} ${heightUnits}`}
