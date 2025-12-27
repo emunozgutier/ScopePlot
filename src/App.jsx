@@ -101,38 +101,52 @@ function App() {
 
   const handleSaveGenerator = (newData) => {
     // Save config and Generate Data
-    const newAppData = { ...appData };
-    newAppData.FunctionGenSignalData = { ...newData, isOpen: false }; // Close modal
+    // Use functional update to ensure we work with the latest state and avoid stale closures
+    setAppData(prev => {
+      let newAppData = { ...prev };
 
-    if (newData.enabled) {
-      // Generate Buffer using named export
-      const buffer = generateBuffer(newData);
-      const targetCh = newData.targetChannelId;
+      // Update FunctionGenSignalData (and close modal)
+      newAppData.FunctionGenSignalData = { ...newData, isOpen: false };
 
-      // Update Signal Data with Original
-      newAppData.displayData.signalData = newAppData.displayData.signalData.map(sig => {
-        if (sig.id === targetCh) {
-          const newTimeData = {
-            ...sig.timeData,
-            defaultZeroData: false,
-            OriginalVoltageTimeData: buffer,
-            voltageTimeData: buffer
+      if (newData.enabled) {
+        // Generate Buffer
+        const buffer = generateBuffer(newData);
+        const targetCh = newData.targetChannelId;
+
+        // Update Signal Data - Ensure we create a new displayData object (Immutability)
+        const newSignalData = prev.displayData.signalData.map(sig => {
+          if (sig.id === targetCh) {
+            const newTimeData = {
+              ...sig.timeData,
+              defaultZeroData: false,
+              OriginalVoltageTimeData: buffer,
+              voltageTimeData: buffer
+            };
+            return { ...sig, timeData: newTimeData };
+          }
+          return sig;
+        });
+
+        newAppData.displayData = {
+          ...prev.displayData,
+          signalData: newSignalData
+        };
+
+        // Ensure Channel is visible
+        const channelConfig = prev.controlPanelData.channels.find(c => c.id === targetCh);
+        if (channelConfig && !channelConfig.visible) {
+          const newChannels = prev.controlPanelData.channels.map(c =>
+            c.id === targetCh ? { ...c, visible: true } : c
+          );
+          newAppData.controlPanelData = {
+            ...prev.controlPanelData,
+            channels: newChannels
           };
-          return { ...sig, timeData: newTimeData };
         }
-        return sig;
-      });
-
-      // Ensure Channel is visible
-      const channelConfig = newAppData.controlPanelData.channels.find(c => c.id === targetCh);
-      if (channelConfig && !channelConfig.visible) {
-        newAppData.controlPanelData.channels = newAppData.controlPanelData.channels.map(c =>
-          c.id === targetCh ? { ...c, visible: true } : c
-        );
       }
-    }
 
-    setAppData(newAppData);
+      return newAppData;
+    });
   };
 
   // Simulation Loop
