@@ -4,7 +4,7 @@ import { performAutoSet } from './subcomponents/AutoSet';
 import ControlPanelTime from './subcomponents/ControlPanelTime';
 import ControlPanelChannel from './subcomponents/ControlPanelChannel';
 
-const ControlPanel = ({ controlPanelData, signalData, onUpdate }) => {
+const ControlPanel = ({ controlPanelData, signalData, onUpdate, onFreqDomain }) => {
     const handleGlobalUpdate = (newData) => {
         onUpdate(newData);
     };
@@ -46,7 +46,7 @@ const ControlPanel = ({ controlPanelData, signalData, onUpdate }) => {
                     <button className="btn-secondary" style={{ padding: '4px 8px', fontSize: '11px' }} onClick={handleAutoSet}>
                         Auto Set
                     </button>
-                    <button className="btn-secondary" style={{ padding: '4px 8px', fontSize: '11px' }}>
+                    <button className="btn-secondary" style={{ padding: '4px 8px', fontSize: '11px' }} onClick={onFreqDomain}>
                         Freq Domain
                     </button>
                 </div>

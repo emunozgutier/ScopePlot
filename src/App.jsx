@@ -7,7 +7,17 @@ import MenuBar from './components/MenuBar';
 import Display from './components/Display';
 import ControlPanel from './components/ControlPanel';
 import LoadTestModal from './components/subcomponents/LoadTestModal';
-import { defaultSignal, generateBuffer } from './components/subcomponents/DisplaySignal'; // Named imports for logic
+import { defaultSignal, generateBuffer } from './components/subcomponents/DisplaySignal';
+import { computeFFT } from './components/subcomponents/fft';
+
+// later in JSX return
+<Display
+  displayData={appData.displayData}
+  controlPanelData={appData.controlPanelData}
+  onUpdate={updateControlPanelData}
+  showFrequency={showFrequency}
+  frequencyData={frequencyData}
+/>
 
 // Data
 import { initialMenuBarData } from './components/MenuBarData';
@@ -23,6 +33,37 @@ const initialAppData = {
 };
 
 function App() {
+  const [frequencyData, setFrequencyData] = useState([]);
+  const [showFrequency, setShowFrequency] = useState(false);
+
+  // Handler for Frequency Domain button
+  const handleFreqDomain = () => {
+    // Compute sample rate
+    const { timePerUnit, TotalSignalSamples } = appData.controlPanelData;
+    const totalTime = timePerUnit * 10; // seconds
+    const sampleRate = TotalSignalSamples / totalTime;
+    // Compute FFT for each active channel
+    const activeChannels = appData.controlPanelData.channels.filter(ch => ch.visible);
+    const freqData = activeChannels.map(ch => {
+      const sig = appData.displayData.signalData.find(s => s.id === ch.id);
+      if (!sig || !sig.voltageTimeData) return { id: ch.id, data: [] };
+      // Placeholder for actual FFT computation
+      // const fft = computeFFT(sig.voltageTimeData, sampleRate);
+      const fft = []; // Replace with actual FFT result
+      return { id: ch.id, data: fft };
+    });
+    setFrequencyData(freqData);
+    setShowFrequency(true);
+  };
+
+  // Pass handler to ControlPanel
+  const handleControlPanelUpdate = (newData) => {
+    setAppData(prev => ({ ...prev, controlPanelData: newData }));
+  };
+
+  // Updated render to include showFrequency flag
+  // (Will be used in Display component)
+
   const [appData, setAppData] = useState(initialAppData);
   const timeRef = useRef(0);
 
@@ -48,9 +89,6 @@ function App() {
       };
     });
   }, []);
-
-  // ... imports
-
 
   // ... (inside App)
 
@@ -180,11 +218,14 @@ function App() {
           displayData={appData.displayData}
           controlPanelData={appData.controlPanelData}
           onUpdate={updateControlPanelData}
+          showFrequency={showFrequency}
+          frequencyData={frequencyData}
         />
         <ControlPanel
           controlPanelData={appData.controlPanelData}
           signalData={appData.displayData.signalData}
           onUpdate={updateControlPanelData}
+          onFreqDomain={handleFreqDomain}
         />
       </div>
       <LoadTestModal

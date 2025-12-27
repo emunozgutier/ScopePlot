@@ -13,16 +13,16 @@ const ControlPanelTime = ({ controlPanelData, onUpdate, maxSamples }) => {
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            <h3 style={{ margin: 0, color: 'white', borderBottom: '1px solid #555', paddingBottom: '5px' }}>Time</h3>
+            <h3 style={{ margin: 0, color: 'white', borderBottom: '1px solid #555', paddingBottom: '5px' }}>Frequency</h3>
             <div style={{ display: 'flex', justifyContent: 'space-around' }}>
                 <Knob
-                    label="Time/Div"
+                    label="Freq/Div"
                     value={timePerUnit}
                     onChange={(val) => updateGlobal('timePerUnit', val)}
                     stepType="1-2-5"
                     min={0.001}
                     max={100}
-                    unit="s"
+                    unit="Hz"
                 />
                 <Knob
                     label="Offset"
@@ -31,7 +31,7 @@ const ControlPanelTime = ({ controlPanelData, onUpdate, maxSamples }) => {
                     step={0.1 * timePerUnit} // Step relative to scale
                     min={-100}
                     max={100}
-                    unit="s"
+                    unit="Hz"
                 />
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                     <Knob
