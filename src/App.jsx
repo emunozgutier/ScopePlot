@@ -241,7 +241,6 @@ function App() {
           controlPanelData={appData.controlPanelData}
           onUpdate={updateControlPanelData}
           onSignalUpdate={updateSignalData}
-          showFrequency={!appData.controlPanelData.timeDomain}
         />
         <ControlPanel
           controlPanelData={appData.controlPanelData}

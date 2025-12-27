@@ -3,9 +3,10 @@ import React from 'react';
 import DisplayOffsetTab from './subcomponents/DisplayOffsetTab';
 import DisplaySignal from './subcomponents/DisplaySignal';
 
-const Display = ({ displayData, controlPanelData, onUpdate, onSignalUpdate, showFrequency }) => {
+const Display = ({ displayData, controlPanelData, onUpdate, onSignalUpdate }) => {
     const widthUnits = 10;
     const heightUnits = 8;
+    const showFrequency = !controlPanelData.timeDomain;
 
     // ... (keep handleChannelUpdate)
 
