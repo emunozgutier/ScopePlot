@@ -2,7 +2,7 @@ import React from 'react';
 import Knob from './subcomponents/Knob';
 
 const ControlPanelTime = ({ controlPanelData, onUpdate, maxSamples }) => {
-    const { timePerUnit, TotalSignalSamples, timeOffset } = controlPanelData;
+    const { timePerUnit, TotalSignalSamples, timeOffset, timeDomain } = controlPanelData;
 
     const updateGlobal = (key, value) => {
         onUpdate({
@@ -11,18 +11,23 @@ const ControlPanelTime = ({ controlPanelData, onUpdate, maxSamples }) => {
         });
     };
 
+    const isTime = timeDomain !== false; // Default to true if undefined, though it should be defined
+    const headerTitle = isTime ? "Time Base" : "Frequency";
+    const unitScale = isTime ? "s" : "Hz";
+    const labelScale = isTime ? "Time/Div" : "Freq/Div";
+
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            <h3 style={{ margin: 0, color: 'white', borderBottom: '1px solid #555', paddingBottom: '5px' }}>Frequency</h3>
+            <h3 style={{ margin: 0, color: 'white', borderBottom: '1px solid #555', paddingBottom: '5px' }}>{headerTitle}</h3>
             <div style={{ display: 'flex', justifyContent: 'space-around' }}>
                 <Knob
-                    label="Freq/Div"
+                    label={labelScale}
                     value={timePerUnit}
                     onChange={(val) => updateGlobal('timePerUnit', val)}
                     stepType="1-2-5"
                     min={0.001}
                     max={100}
-                    unit="Hz"
+                    unit={unitScale}
                 />
                 <Knob
                     label="Offset"
@@ -31,7 +36,7 @@ const ControlPanelTime = ({ controlPanelData, onUpdate, maxSamples }) => {
                     step={0.1 * timePerUnit} // Step relative to scale
                     min={-100}
                     max={100}
-                    unit="Hz"
+                    unit={unitScale}
                 />
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                     <Knob
