@@ -5,18 +5,22 @@ import DisplayPoint from './subcomponents/DisplayPoint';
  * DisplaySignal Component
  * Renders an oscilloscope signal trace and its data points.
  */
-const DisplaySignal = ({ signal, controlPanelData, showFrequency, frequencyData }) => {
+const DisplaySignal = ({ signal, controlPanelData, showFrequency }) => {
     const { id } = signal;
     const { voltsPerUnit, offset, color, visible } = controlPanelData.channels.find(ch => ch.id === id) || {};
-    const { timePerUnit, timeOffset, TotalSignalSamples } = controlPanelData;
+    const { timePerUnit, timeOffset, TotalSignalSamples, timeDomain } = controlPanelData;
 
     if (!visible) return null;
 
     let points = [];
 
-    if (showFrequency && frequencyData) {
+    // Check Domain from Control Panel Data (or showFrequency prop if passed from App)
+    // showFrequency comes from !timeDomain in App.jsx
+
+    if (showFrequency && !timeDomain) {
         // --- Frequency Domain ---
-        const chFreqData = frequencyData.find(d => d.id === id);
+        // Access frequencyData directly from signal
+        const chFreqData = signal.frequencyData;
         if (!chFreqData || !chFreqData.data) return null;
 
         const data = chFreqData.data;
@@ -27,20 +31,12 @@ const DisplaySignal = ({ signal, controlPanelData, showFrequency, frequencyData 
         const totalTime = timePerUnit * 10;
         const maxFreq = (TotalSignalSamples / totalTime) / 2;
 
-        // Map Frequency to SVG X (0 to 10 units)
-        // Map Magnitude to SVG Y (0 to 8 units) based on scaling?
-        // Let's assume some auto-scaling or fixed scaling for now.
-        // For visualizing, let's normalize freq to width (10 units)
-
         points = data.map((d) => {
             // x: 0 to 10
             // d.freq goes from 0 to maxFreq
             const x = (d.freq / maxFreq) * 10;
 
             // y: Magnitude.
-            // We can use voltsPerUnit as a scaling factor?
-            // Or fixed scaling. Let's use voltsPerUnit for "Mag/Div" logic
-            // Center at baseline? Freq is usually positive, so bottom up.
             const y = 8 - (d.magnitude * 10); // Arbitrary scaling for visibility
 
             return { x, y };
@@ -48,10 +44,11 @@ const DisplaySignal = ({ signal, controlPanelData, showFrequency, frequencyData 
 
     } else {
         // --- Time Domain ---
-        const { voltageTimeData } = signal;
-        if (!voltageTimeData || voltageTimeData.length < 2) return null;
+        // Access timeData from signal
+        const tData = signal.timeData;
+        if (!tData || !tData.voltageTimeData || tData.voltageTimeData.length < 2) return null;
 
-        points = voltageTimeData.map(([t, v]) => {
+        points = tData.voltageTimeData.map(([t, v]) => {
             const x = ((t + (timeOffset || 0)) / timePerUnit);
             const y = 4 - (v + offset) / voltsPerUnit;
             return { x, y };

@@ -3,7 +3,7 @@ import React from 'react';
 import DisplayOffsetTab from './subcomponents/DisplayOffsetTab';
 import DisplaySignal from './subcomponents/DisplaySignal';
 
-const Display = ({ displayData, controlPanelData, onUpdate, showFrequency, frequencyData }) => {
+const Display = ({ displayData, controlPanelData, onUpdate, showFrequency }) => {
     const widthUnits = 10;
     const heightUnits = 8;
 
@@ -62,7 +62,6 @@ const Display = ({ displayData, controlPanelData, onUpdate, showFrequency, frequ
                             signal={sig}
                             controlPanelData={controlPanelData}
                             showFrequency={showFrequency}
-                            frequencyData={frequencyData}
                         />
                     ))}
                 </svg>

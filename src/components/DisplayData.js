@@ -1,3 +1,5 @@
+import { DisplaySignalData } from './subcomponents/DisplaySignalData';
+
 export const DEFAULT_SIGNAL_DATA = {
     id: 0,
     defaultZeroData: true,
@@ -7,9 +9,9 @@ export const DEFAULT_SIGNAL_DATA = {
 
 export const initialDisplayData = {
     signalData: [
-        { ...DEFAULT_SIGNAL_DATA, id: 0 },
-        { ...DEFAULT_SIGNAL_DATA, id: 1 },
-        { ...DEFAULT_SIGNAL_DATA, id: 2 },
-        { ...DEFAULT_SIGNAL_DATA, id: 3 },
+        new DisplaySignalData(0),
+        new DisplaySignalData(1),
+        new DisplaySignalData(2),
+        new DisplaySignalData(3),
     ]
 };

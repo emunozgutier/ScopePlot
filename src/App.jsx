@@ -25,37 +25,6 @@ const initialAppData = {
 };
 
 function App() {
-  const [frequencyData, setFrequencyData] = useState([]);
-  const [showFrequency, setShowFrequency] = useState(false);
-
-  // Handler for Frequency Domain button
-  const handleFreqDomain = () => {
-    // Compute sample rate
-    const { timePerUnit, TotalSignalSamples } = appData.controlPanelData;
-    const totalTime = timePerUnit * 10; // seconds
-    const sampleRate = TotalSignalSamples / totalTime;
-    // Compute FFT for each active channel
-    const activeChannels = appData.controlPanelData.channels.filter(ch => ch.visible);
-    const freqData = activeChannels.map(ch => {
-      const sig = appData.displayData.signalData.find(s => s.id === ch.id);
-      if (!sig || !sig.voltageTimeData) return { id: ch.id, data: [] };
-      // Placeholder for actual FFT computation
-      const fft = computeFFT(sig.voltageTimeData, sampleRate);
-      console.log('FFT Output for Ch:', ch.id, fft.length, 'bins');
-      return { id: ch.id, data: fft };
-    });
-    setFrequencyData(freqData);
-    setShowFrequency(true);
-  };
-
-  // Pass handler to ControlPanel
-  const handleControlPanelUpdate = (newData) => {
-    setAppData(prev => ({ ...prev, controlPanelData: newData }));
-  };
-
-  // Updated render to include showFrequency flag
-  // (Will be used in Display component)
-
   const [appData, setAppData] = useState(initialAppData);
   const timeRef = useRef(0);
 
@@ -66,10 +35,18 @@ function App() {
 
     setAppData(prev => {
       const newSignals = prev.displayData.signalData.map(sig => {
-        return {
-          ...sig,
+        // [REF_CHANGE] sig is now instance of DisplaySignalData (or structured that way)
+        // We must update sig.timeData
+        const newTimeData = {
+          ...sig.timeData,
           OriginalVoltageTimeData: defaultBuffer,
           voltageTimeData: defaultBuffer
+        };
+        // To maintain class instance if possible, or just struct
+        // React state usually breaks class methods if we spread, but we only have data fields.
+        return {
+          ...sig,
+          timeData: newTimeData
         };
       });
       return {
@@ -82,7 +59,72 @@ function App() {
     });
   }, []);
 
-  // ... (inside App)
+  // Handler for Frequency Domain button (Toggles Domain)
+  const handleFreqDomain = () => {
+    setAppData(prev => {
+      const isTimeDomain = prev.controlPanelData.timeDomain;
+      const newTimeDomain = !isTimeDomain;
+
+      let newSignals = prev.displayData.signalData;
+
+      if (!newTimeDomain) {
+        // Switching to Frequency Domain -> Compute FFT
+        const { timePerUnit, TotalSignalSamples } = prev.controlPanelData;
+        const totalTime = timePerUnit * 10;
+        const sampleRate = TotalSignalSamples / totalTime;
+
+        const activeChannels = prev.controlPanelData.channels.filter(ch => ch.visible);
+
+        newSignals = prev.displayData.signalData.map(sig => {
+          const isActive = activeChannels.find(ch => ch.id === sig.id);
+          if (isActive) {
+            // Use timeData for input
+            if (!sig.timeData || !sig.timeData.voltageTimeData) return sig;
+
+            const fft = computeFFT(sig.timeData.voltageTimeData, sampleRate);
+            return { ...sig, frequencyData: { id: sig.id, data: fft } };
+          }
+          return sig; // No change for inactive
+        });
+      }
+
+      return {
+        ...prev,
+        displayData: {
+          ...prev.displayData,
+          signalData: newSignals
+        },
+        controlPanelData: {
+          ...prev.controlPanelData,
+          timeDomain: newTimeDomain
+        }
+      };
+    });
+  };
+
+  // Pass handler to ControlPanel
+  const handleControlPanelUpdate = (newData) => {
+    setAppData(prev => ({ ...prev, controlPanelData: newData }));
+  };
+
+  // State setters
+  const setMenuBarData = (newData) => {
+    setAppData(prev => ({ ...prev, menuBarData: newData }));
+  };
+
+  const updateControlPanelData = (newData) => {
+    setAppData(prev => ({ ...prev, controlPanelData: newData }));
+  };
+
+  const handleMenuAction = (action) => {
+    if (action === 'loadTest') {
+      setAppData(prev => ({
+        ...prev,
+        FunctionGenSignalData: { ...prev.FunctionGenSignalData, isOpen: true }
+      }));
+    }
+  };
+
 
   const handleSaveGenerator = (newData) => {
     // Save config and Generate Data
@@ -97,19 +139,20 @@ function App() {
       // Update Signal Data with Original
       newAppData.displayData.signalData = newAppData.displayData.signalData.map(sig => {
         if (sig.id === targetCh) {
-          return {
-            ...sig,
-            defaultZeroData: false, // [FIX] User requirement
+          const newTimeData = {
+            ...sig.timeData,
+            defaultZeroData: false,
             OriginalVoltageTimeData: buffer,
-            voltageTimeData: buffer // Display immediately
+            voltageTimeData: buffer
           };
+          return { ...sig, timeData: newTimeData };
         }
         return sig;
       });
 
       // Ensure Channel is visible
       const channelConfig = newAppData.controlPanelData.channels.find(c => c.id === targetCh);
-      if (!channelConfig.visible) {
+      if (channelConfig && !channelConfig.visible) {
         newAppData.controlPanelData.channels = newAppData.controlPanelData.channels.map(c =>
           c.id === targetCh ? { ...c, visible: true } : c
         );
@@ -124,21 +167,28 @@ function App() {
     let animationFrameId;
 
     const renderLoop = () => {
-      const { timePerUnit, TotalSignalSamples } = appData.controlPanelData;
+      const { timePerUnit, TotalSignalSamples, timeDomain } = appData.controlPanelData;
+
+      // Only simulate if not in Freq Domain? Or keep simulating in background?
+      // Usually better to pause sim if viewing specific freq snapshot, but let's keep running for now
+      // unless user wants it paused.
 
       timeRef.current += 0.02;
 
       setAppData(prev => {
         const newSignals = prev.displayData.signalData.map(sig => {
-          if (sig.OriginalVoltageTimeData && sig.OriginalVoltageTimeData.length > 0) {
-            return sig; // Don't re-simulate
+          // Access timeData
+          const tData = sig.timeData;
+          if (tData.OriginalVoltageTimeData && tData.OriginalVoltageTimeData.length > 0) {
+            return sig; // Don't re-simulate static data
           }
 
           // Normal Simulation Logic (Fallback)
           const points = [];
           const chSettings = prev.controlPanelData.channels.find(c => c.id === sig.id);
           if (!chSettings || !chSettings.visible) {
-            return { ...sig, voltageTimeData: [] };
+            const newT = { ...tData, voltageTimeData: [] };
+            return { ...sig, timeData: newT };
           }
 
           const count = Math.min(5000, TotalSignalSamples);
@@ -161,14 +211,37 @@ function App() {
             if (chSettings.noiseFilter) val *= 0.5;
             points.push([relativeT, val * 3]);
           }
-          return { ...sig, voltageTimeData: points };
+
+          const newT = { ...tData, voltageTimeData: points };
+          return { ...sig, timeData: newT };
         });
+
+        // Loop: Check if we need to update freq data dynamically?
+        // For now only on toggle as per previous logic, or maybe we want live FFT?
+        // User didn't specify live FFT, so stick to toggle logic for performance, 
+        // OR re-compute if timeDomain is false?
+        // Actually, if sim is running, FFT should update.
+        // Let's add live FFT update if !timeDomain.
+
+        let finalSignals = newSignals;
+        if (!timeDomain) {
+          const totalTime = timePerUnit * 10;
+          const sampleRate = TotalSignalSamples / totalTime;
+          finalSignals = newSignals.map(sig => {
+            const chSettings = prev.controlPanelData.channels.find(c => c.id === sig.id);
+            if (chSettings && chSettings.visible && sig.timeData.voltageTimeData.length > 0) {
+              const fft = computeFFT(sig.timeData.voltageTimeData, sampleRate);
+              return { ...sig, frequencyData: { id: sig.id, data: fft } };
+            }
+            return sig;
+          });
+        }
 
         return {
           ...prev,
           displayData: {
             ...prev.displayData,
-            signalData: newSignals
+            signalData: finalSignals
           }
         };
       });
@@ -178,25 +251,8 @@ function App() {
 
     renderLoop();
     return () => cancelAnimationFrame(animationFrameId);
-  }, [appData.controlPanelData.TotalSignalSamples, appData.controlPanelData.timePerUnit]);
+  }, [appData.controlPanelData.TotalSignalSamples, appData.controlPanelData.timePerUnit, appData.controlPanelData.timeDomain]); // added timeDomain dependency
 
-  // State setters
-  const setMenuBarData = (newData) => {
-    setAppData(prev => ({ ...prev, menuBarData: newData }));
-  };
-
-  const updateControlPanelData = (newData) => {
-    setAppData(prev => ({ ...prev, controlPanelData: newData }));
-  };
-
-  const handleMenuAction = (action) => {
-    if (action === 'loadTest') {
-      setAppData(prev => ({
-        ...prev,
-        FunctionGenSignalData: { ...prev.FunctionGenSignalData, isOpen: true }
-      }));
-    }
-  };
 
   return (
     <div className="app-container">
@@ -210,12 +266,11 @@ function App() {
           displayData={appData.displayData}
           controlPanelData={appData.controlPanelData}
           onUpdate={updateControlPanelData}
-          showFrequency={showFrequency}
-          frequencyData={frequencyData}
+          showFrequency={!appData.controlPanelData.timeDomain}
         />
         <ControlPanel
           controlPanelData={appData.controlPanelData}
-          signalData={appData.displayData.signalData}
+          signalData={appData.displayData.signalData} // Pass updated signalData structure
           onUpdate={updateControlPanelData}
           onFreqDomain={handleFreqDomain}
         />
