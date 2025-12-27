@@ -29,7 +29,7 @@ const ControlPanel = ({ controlPanelData, signalData, onUpdate, onFreqDomain }) 
     });
 
     if (activeChannels.length > 0) {
-        const lengths = activeChannels.map(s => s.voltageTimeData ? s.voltageTimeData.length : 0);
+        const lengths = activeChannels.map(s => (s.timeData && Array.isArray(s.timeData)) ? s.timeData.length : 0);
         maxSamples = Math.max(...lengths);
     } else {
         maxSamples = 5000; // Default limit if no channels active

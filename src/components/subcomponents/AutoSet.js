@@ -3,21 +3,22 @@ import { snapTo125 } from './subcomponents/KnobNumber';
 export const performAutoSet = (controlPanelData, signalData) => {
     const visibleChannels = controlPanelData.channels.filter(ch => ch.visible);
     const activeSignals = signalData.filter(sig =>
-        visibleChannels.some(ch => ch.id === sig.id) && sig.voltageTimeData.length > 0
+        visibleChannels.some(ch => ch.id === sig.id) && sig.timeData?.length > 0
     );
 
     if (activeSignals.length === 0) return controlPanelData;
 
     // 1. Time Logic
-    let maxTime = 0;
+    let activeMaxTime = 0;
     activeSignals.forEach(sig => {
-        const lastPoint = sig.voltageTimeData[sig.voltageTimeData.length - 1];
-        if (lastPoint && lastPoint[0] > maxTime) maxTime = lastPoint[0];
+        const vData = sig.timeData;
+        const lastPoint = vData[vData.length - 1];
+        if (lastPoint && lastPoint[0] > activeMaxTime) activeMaxTime = lastPoint[0];
     });
 
     // Set Time/Div to fit maxTime in 10 units
     // If maxTime is very small (e.g. 0), keep default.
-    let newTimePerUnit = maxTime > 0 ? maxTime / 10 : controlPanelData.timePerUnit;
+    let newTimePerUnit = activeMaxTime > 0 ? activeMaxTime / 10 : controlPanelData.timePerUnit;
 
     // Snap Time to 1-2-5
     newTimePerUnit = snapTo125(newTimePerUnit);
@@ -27,13 +28,15 @@ export const performAutoSet = (controlPanelData, signalData) => {
     const newChannels = controlPanelData.channels.map(ch => {
         if (!ch.visible) return ch;
         const sig = signalData.find(s => s.id === ch.id);
-        if (!sig || sig.voltageTimeData.length === 0) return ch;
+
+        // Safety check for signal data
+        if (!sig || !sig.timeData || sig.timeData.length === 0) return ch;
 
         let minV = Infinity;
         let maxV = -Infinity;
 
         // Analyze raw voltage
-        sig.voltageTimeData.forEach(([_, v]) => {
+        sig.timeData.forEach(([_, v]) => {
             if (v < minV) minV = v;
             if (v > maxV) maxV = v;
         });
@@ -62,7 +65,7 @@ export const performAutoSet = (controlPanelData, signalData) => {
     // Compute min time for offset
     let minTime = Infinity;
     activeSignals.forEach(sig => {
-        const firstPoint = sig.voltageTimeData[0];
+        const firstPoint = sig.timeData[0];
         if (firstPoint && firstPoint[0] < minTime) minTime = firstPoint[0];
     });
     const newTimeOffset = minTime !== Infinity ? -minTime : 0;

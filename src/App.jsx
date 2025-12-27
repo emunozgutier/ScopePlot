@@ -37,15 +37,12 @@ function App() {
       const newSignals = prev.displayData.signalData.map(sig => {
         // [REF_CHANGE] sig is now instance of DisplaySignalData (or structured that way)
         // We must update sig.timeData
-        const newTimeData = {
-          ...sig.timeData,
-          OriginalVoltageTimeData: defaultBuffer,
-          voltageTimeData: defaultBuffer
-        };
+        const newTimeData = defaultBuffer;
         // To maintain class instance if possible, or just struct
         // React state usually breaks class methods if we spread, but we only have data fields.
         return {
           ...sig,
+          OriginalVoltageTimeData: defaultBuffer,
           timeData: newTimeData
         };
       });
@@ -116,13 +113,13 @@ function App() {
         // Update Signal Data - Ensure we create a new displayData object (Immutability)
         const newSignalData = prev.displayData.signalData.map(sig => {
           if (sig.id === targetCh) {
-            const newTimeData = {
-              ...sig.timeData,
+            const newTimeData = buffer;
+            return {
+              ...sig,
               defaultZeroData: false,
               OriginalVoltageTimeData: buffer,
-              voltageTimeData: buffer
+              timeData: newTimeData
             };
-            return { ...sig, timeData: newTimeData };
           }
           return sig;
         });
@@ -166,7 +163,8 @@ function App() {
         const newSignals = prev.displayData.signalData.map(sig => {
           // Access timeData
           const tData = sig.timeData;
-          if (tData.OriginalVoltageTimeData && tData.OriginalVoltageTimeData.length > 0) {
+          // Check static data at signal root
+          if (sig.OriginalVoltageTimeData && sig.OriginalVoltageTimeData.length > 0) {
             return sig; // Don't re-simulate static data
           }
 
@@ -174,8 +172,7 @@ function App() {
           const points = [];
           const chSettings = prev.controlPanelData.channels.find(c => c.id === sig.id);
           if (!chSettings || !chSettings.visible) {
-            const newT = { ...tData, voltageTimeData: [] };
-            return { ...sig, timeData: newT };
+            return { ...sig, timeData: [] };
           }
 
           const count = Math.min(5000, TotalSignalSamples);
@@ -199,7 +196,7 @@ function App() {
             points.push([relativeT, val * 3]);
           }
 
-          const newT = { ...tData, voltageTimeData: points };
+          const newT = points;
           return { ...sig, timeData: newT };
         });
 

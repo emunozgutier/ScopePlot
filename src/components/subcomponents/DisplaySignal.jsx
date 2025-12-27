@@ -46,7 +46,8 @@ const DisplaySignal = ({ displaySignalData, setDisplaySignalData, controlPanelDa
 
     } else {
         // --- Time Domain ---
-        const { voltageTimeData } = displaySignalData.timeData || {};
+        // --- Time Domain ---
+        const voltageTimeData = displaySignalData.timeData || [];
         if (!voltageTimeData || voltageTimeData.length < 2) return null;
 
         points = voltageTimeData.map(([t, v]) => {
