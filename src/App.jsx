@@ -40,7 +40,7 @@ function App() {
       const newTimeData = defaultBuffer;
       return {
         ...sig,
-        defaultZeroData: false,
+        defaultZeroData: true,
         timeData: newTimeData,
         timeDataSample: getSampledData(newTimeData, 'time', useControlPanelStore.getState().controlPanelData)
       };
@@ -69,6 +69,20 @@ function App() {
       const newSignals = prevSignals.map(sig => {
         // Access timeData
         const tData = sig.timeData;
+        if (sig.defaultZeroData === true) {
+          // If it's a default zero signal, check if we need to resize the buffer
+          // but DO NOT fall through to simulation (sine wave)
+          const count = Math.min(5000, TotalSignalSamples);
+          if (tData.length !== count) {
+            // Regenerate zero buffer with correct size
+            const newTimeData = defaultSignal(timePerUnit, TotalSignalSamples);
+            const newSample = getSampledData(newTimeData, 'time', controlPanelData);
+            return { ...sig, timeData: newTimeData, timeDataSample: newSample };
+          }
+          // If size matches, do nothing (keep it zero)
+          return sig;
+        }
+
         // Check static data
         if (sig.defaultZeroData === false && tData && tData.length > 0) {
           // Check if length matches requested TotalSignalSamples
