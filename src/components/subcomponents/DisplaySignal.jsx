@@ -14,11 +14,10 @@ const DisplaySignal = ({ displaySignalData, setDisplaySignalData, controlPanelDa
 
     if (!visible) return null;
 
-    let points = [];
+    let points = []; // Trace points (High Res)
+    let displayPoints = []; // Dot points (Sampled)
 
     // Check Domain from Control Panel Data (or showFrequency prop if passed from App)
-    // showFrequency comes from !timeDomain in App.jsx
-
     if (showFrequency && !timeDomain) {
         // --- Frequency Domain ---
         // Access frequencyData directly from signal
@@ -33,28 +32,45 @@ const DisplaySignal = ({ displaySignalData, setDisplaySignalData, controlPanelDa
         const totalTime = timePerUnit * 10;
         const maxFreq = (TotalSignalSamples / totalTime) / 2;
 
-        points = data.map((d) => {
-            // x: 0 to 10
-            // d.freq goes from 0 to maxFreq
+        const mapFreqPoint = (d) => {
             const x = (d.freq / maxFreq) * 10;
-
-            // y: Magnitude.
-            const y = 8 - (d.magnitude * 10); // Arbitrary scaling for visibility
-
+            const y = 8 - (d.magnitude * 10);
             return { x, y };
-        });
+        };
+
+        points = data.map(mapFreqPoint);
+
+        // Sampling for Freq Domain (if available)
+        if (displaySignalData.frequencyDataSample && displaySignalData.frequencyDataSample.length > 0) {
+            displayPoints = displaySignalData.frequencyDataSample.map(mapFreqPoint);
+        } else {
+            displayPoints = points;
+        }
 
     } else {
-        // --- Time Domain ---
         // --- Time Domain ---
         const voltageTimeData = displaySignalData.timeData || [];
         if (!voltageTimeData || voltageTimeData.length < 2) return null;
 
+        // Trace uses full resolution
         points = voltageTimeData.map(([t, v]) => {
             const x = ((t + (timeOffset || 0)) / timePerUnit);
             const y = 4 - (v + offset) / voltsPerUnit;
             return { x, y };
         });
+
+        // Sampled points for rendering Dots
+        const sampledRaw = displaySignalData.timeDataSample;
+        if (sampledRaw && sampledRaw.length > 0) {
+            displayPoints = sampledRaw.map(([t, v]) => {
+                const x = ((t + (timeOffset || 0)) / timePerUnit);
+                const y = 4 - (v + offset) / voltsPerUnit;
+                return { x, y };
+            });
+        } else {
+            // Fallback to full data if sampling missing
+            displayPoints = points;
+        }
     }
 
     // Create Path String
@@ -70,8 +86,8 @@ const DisplaySignal = ({ displaySignalData, setDisplaySignalData, controlPanelDa
                 strokeWidth="0.05"
                 vectorEffect="non-scaling-stroke"
             />
-            {/* The Data Points - Optional: Hide for large FFT? */}
-            {points.map((p, index) => (
+            {/* The Data Points - Uses Downsampled Data */}
+            {displayPoints.map((p, index) => (
                 <DisplayPoint
                     key={index}
                     x={p.x}

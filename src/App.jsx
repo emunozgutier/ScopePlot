@@ -8,6 +8,7 @@ import Display from './components/Display';
 import ControlPanel from './components/ControlPanel';
 import LoadTestModal from './components/subcomponents/LoadTestModal';
 import { defaultSignal, generateBuffer } from './components/subcomponents/DisplaySignal';
+import { getSampledData } from './components/subcomponents/subcomponents/ControlPanelTimeSamples';
 
 
 
@@ -42,8 +43,9 @@ function App() {
         // React state usually breaks class methods if we spread, but we only have data fields.
         return {
           ...sig,
-          OriginalVoltageTimeData: defaultBuffer,
-          timeData: newTimeData
+          defaultZeroData: false,
+          timeData: newTimeData,
+          timeDataSample: getSampledData(newTimeData, 'time', initialAppData.controlPanelData)
         };
       });
       return {
@@ -83,7 +85,26 @@ function App() {
   };
 
   const updateControlPanelData = (newData) => {
-    setAppData(prev => ({ ...prev, controlPanelData: newData }));
+    // Regenerate Samples if Time/Div or Offset changed
+    // We could optimize by checking if relevant keys changed, but for now we do it safe.
+    setAppData(prev => {
+      const newSignals = prev.displayData.signalData.map(sig => {
+        // Access current timeData
+        const currentData = sig.timeData;
+        // Generate new Sample based on NEW control panel data
+        const newSample = getSampledData(currentData, 'time', newData);
+        return { ...sig, timeDataSample: newSample };
+      });
+
+      return {
+        ...prev,
+        controlPanelData: newData,
+        displayData: {
+          ...prev.displayData,
+          signalData: newSignals
+        }
+      };
+    });
   };
 
   const handleMenuAction = (action) => {
@@ -117,8 +138,8 @@ function App() {
             return {
               ...sig,
               defaultZeroData: false,
-              OriginalVoltageTimeData: buffer,
-              timeData: newTimeData
+              timeData: newTimeData,
+              timeDataSample: getSampledData(newTimeData, 'time', prev.controlPanelData)
             };
           }
           return sig;
@@ -160,15 +181,18 @@ function App() {
       timeRef.current += 0.02;
 
       setAppData(prev => {
+        let hasChanges = false;
+
         const newSignals = prev.displayData.signalData.map(sig => {
           // Access timeData
           const tData = sig.timeData;
           // Check static data at signal root
-          if (sig.OriginalVoltageTimeData && sig.OriginalVoltageTimeData.length > 0) {
+          if (sig.defaultZeroData === false && tData && tData.length > 0) {
             return sig; // Don't re-simulate static data
           }
 
           // Normal Simulation Logic (Fallback)
+          hasChanges = true; // We are generating new data
           const points = [];
           const chSettings = prev.controlPanelData.channels.find(c => c.id === sig.id);
           if (!chSettings || !chSettings.visible) {
@@ -197,8 +221,11 @@ function App() {
           }
 
           const newT = points;
-          return { ...sig, timeData: newT };
+          const newTSample = getSampledData(newT, 'time', appData.controlPanelData);
+          return { ...sig, timeData: newT, timeDataSample: newTSample };
         });
+
+        if (!hasChanges) return prev;
 
         return {
           ...prev,

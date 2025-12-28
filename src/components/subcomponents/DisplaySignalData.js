@@ -5,7 +5,8 @@ export class DisplaySignalData {
         this.id = id;
         this.defaultZeroData = true;
         this.timeData = []; // Array of [time, voltage]
-        this.OriginalVoltageTimeData = []; // Loaded/Generated static data
         this.frequencyData = null;
+        this.timeDataSample = [];
+        this.frequencyDataSample = [];
     }
 }
