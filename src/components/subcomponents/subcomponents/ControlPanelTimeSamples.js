@@ -14,7 +14,7 @@
 export const getSampledData = (data, domain, controlPanelData) => {
     if (!data || data.length === 0) return [];
 
-    const MAX_SAMPLES = 1000;
+    const MAX_SAMPLES = controlPanelData?.TotalSignalSamples || 1000;
 
     // If data is smaller than max samples, no need to sample
     if (data.length <= MAX_SAMPLES) {

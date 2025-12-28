@@ -71,7 +71,11 @@ function App() {
         const tData = sig.timeData;
         // Check static data
         if (sig.defaultZeroData === false && tData && tData.length > 0) {
-          return sig; // Don't re-simulate
+          // Check if length matches requested TotalSignalSamples
+          // If not, we need to regenerate
+          if (tData.length === Math.min(5000, TotalSignalSamples)) {
+            return sig; // Don't re-simulate
+          }
         }
 
         // Simulation

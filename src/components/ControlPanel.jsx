@@ -32,19 +32,12 @@ const ControlPanel = () => {
         setTimeDomain(!controlPanelData.timeDomain);
     };
 
-    // Calculate Max Samples from Active Channels
-    let maxSamples = 0;
-    const activeChannels = signalData.filter(s => {
-        const ch = controlPanelData.channels.find(c => c.id === s.id);
-        return ch && ch.visible;
-    });
+    // Calculate Max Samples - actually we want to allow the user to SET the target samples
+    // The previous logic clamped the knob to the current signal length, preventing increase.
+    // We should allow the knob to go up to the system max (e.g. 5000).
+    // The signal generation will then catch up.
+    let maxSamples = 5000;
 
-    if (activeChannels.length > 0) {
-        const lengths = activeChannels.map(s => (s.timeData && Array.isArray(s.timeData)) ? s.timeData.length : 0);
-        maxSamples = Math.max(...lengths);
-    } else {
-        maxSamples = 5000; // Default limit if no channels active
-    }
 
     return (
         <div className="control-panel" style={{ width: '300px', backgroundColor: '#222', padding: '10px', overflowY: 'auto' }}>
