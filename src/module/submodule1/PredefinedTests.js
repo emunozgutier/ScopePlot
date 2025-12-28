@@ -1,16 +1,15 @@
-
 import { useSignalStore } from '../../stores/useSignalStore';
 import { useControlPanelStore } from '../../stores/useControlPanelStore';
-import { generateBuffer } from './DisplaySignal';
 import { getSampledData } from './submodule2/ControlPanelTimeSamples';
 import { performAutoSet } from './AutoSet';
+import { generateSignal } from './SignalGenerator';
 
 /**
  * Runs Load Test 1:
  * Channel 0: Sine
  * Channel 1: Triangle
  * Channel 2: Square
- * Channel 3: Sawtooth
+ * Channel 3: Sawtooth (Manual Gen in SignalGenerator)
  * All within 10% frequency of each other.
  * 10 Periods, 10 Samples per Period.
  */
@@ -26,7 +25,7 @@ export const runLoadTest1 = () => {
         { id: 0, shape: 'sine', freq: baseFreq, amp: 5 },       // 1000 Hz
         { id: 1, shape: 'triangle', freq: baseFreq * 0.95, amp: 5 }, // 950 Hz
         { id: 2, shape: 'square', freq: baseFreq * 1.05, amp: 5 },   // 1050 Hz
-        { id: 3, shape: 'sine', freq: baseFreq * 1.0, amp: 5 } // Sawtooth manual or placeholder
+        { id: 3, shape: 'sawtooth', freq: baseFreq * 1.0, amp: 5 } // Explicitly set sawtooth
     ];
 
     // Constructing updates
@@ -38,24 +37,12 @@ export const runLoadTest1 = () => {
         const duration = periods / cfg.freq;
         const sampleRate = samplesPerPeriod * cfg.freq;
 
-        let buffer = [];
-        if (cfg.id === 3) { // Sawtooth manual gen
-            const count = Math.floor(duration * sampleRate);
-            for (let i = 0; i < count; i++) {
-                const t = i / sampleRate;
-                // Sawtooth: 2 * (t * freq - floor(t * freq + 0.5))
-                const val = 2 * (t * cfg.freq - Math.floor(t * cfg.freq + 0.5));
-                buffer.push([t, val * cfg.amp]);
-            }
-        } else {
-            buffer = generateBuffer({
-                duration,
-                sampleRate,
-                frequency: cfg.freq,
-                shape: cfg.shape,
-                amplitude: cfg.amp
-            });
-        }
+        // Use new SignalGenerator
+        const buffer = generateSignal({
+            ...cfg,
+            duration,
+            sampleRate
+        });
 
         // Update Signal
         updateSignal(cfg.id, {
@@ -106,13 +93,15 @@ export const runLoadTest2 = () => {
         const freq = 1000;
         const duration = 0.01; // 10 cycles
         const sampleRate = 100000; // High res
+        const amp = 5;
 
-        const buffer = generateBuffer({
-            duration,
-            sampleRate,
-            frequency: freq,
+        const buffer = generateSignal({
+            id: cfg.id,
             shape: cfg.shape,
-            amplitude: 5
+            freq,
+            amp,
+            duration,
+            sampleRate
         });
 
         updateSignal(cfg.id, {
