@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useFunctionGenStore } from '../../stores/useFunctionGenStore';
 import { useSignalStore } from '../../stores/useSignalStore';
 import { useControlPanelStore } from '../../stores/useControlPanelStore';
-import { generateBuffer } from './DisplaySignal';
+import { generateSignal } from './SignalGenerator';
 import { getSampledData } from './submodule2/ControlPanelTimeSamples';
 
 
@@ -117,7 +117,7 @@ const LoadTestMenu = () => {
 
             // Dynamic import or stick to static? Static.
 
-            const buffer = generateBuffer(newData);
+            const buffer = generateSignal(newData);
             const targetCh = newData.targetChannelId;
 
             // Update Signal Data in Store

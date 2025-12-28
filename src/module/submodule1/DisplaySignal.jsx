@@ -125,31 +125,6 @@ export const defaultSignal = (timePerDiv, totalSamples) => {
     return points;
 };
 
-/**
- * Generates a signal buffer based on configuration.
- */
-export const generateBuffer = (config) => {
-    const { duration, sampleRate, frequency, shape, amplitude } = config;
-    const count = Math.floor(duration * sampleRate);
-    const points = [];
 
-    for (let i = 0; i < count; i++) {
-        const t = i / sampleRate;
-        const phase = 0;
-        const omega = 2 * Math.PI * frequency;
-        let val = 0;
-
-        if (shape === 'sine') {
-            val = Math.sin(omega * t + phase);
-        } else if (shape === 'square') {
-            val = Math.sin(omega * t + phase) > 0 ? 1 : -1;
-        } else if (shape === 'triangle') {
-            val = (2 / Math.PI) * Math.asin(Math.sin(omega * t + phase));
-        }
-
-        points.push([t, val * amplitude]);
-    }
-    return points;
-};
 
 export default DisplaySignal;
