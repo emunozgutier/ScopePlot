@@ -7,28 +7,9 @@ const DisplayOffsetTab = ({ channel, onUpdate, parentHeight }) => {
     // We need a ref to track the last sent offset to avoid flooding updates
     const lastSentOffsetRef = useRef(offset);
 
-    // If channel not visible, don't render
-    if (!visible) return null;
-
     // --- Calculations ---
     const maxOffset = 4 * voltsPerUnit;
     const minOffset = -4 * voltsPerUnit;
-
-    // Visual Clamp State
-    let isClampedUp = false;
-    let isClampedDown = false;
-    let displayOffset = offset;
-
-    if (offset > maxOffset) {
-        isClampedUp = true;
-        displayOffset = maxOffset;
-    } else if (offset < minOffset) {
-        isClampedDown = true;
-        displayOffset = minOffset;
-    }
-
-    const zeroPosUnits = 4 - (displayOffset / voltsPerUnit);
-    const topPercent = (zeroPosUnits / 8) * 100;
 
     // --- Drag Logic ---
     const handleMouseDown = useCallback((e) => {
@@ -84,6 +65,26 @@ const DisplayOffsetTab = ({ channel, onUpdate, parentHeight }) => {
         window.addEventListener('mousemove', handleMouseMove);
         window.addEventListener('mouseup', handleMouseUp);
     }, [offset, voltsPerUnit, onUpdate, minOffset, maxOffset, parentHeight]);
+
+    // If channel not visible, don't render. 
+    // MOVED AFTER HOOKS
+    if (!visible) return null;
+
+    // Visual Clamp State
+    let isClampedUp = false;
+    let isClampedDown = false;
+    let displayOffset = offset;
+
+    if (offset > maxOffset) {
+        isClampedUp = true;
+        displayOffset = maxOffset;
+    } else if (offset < minOffset) {
+        isClampedDown = true;
+        displayOffset = minOffset;
+    }
+
+    const zeroPosUnits = 4 - (displayOffset / voltsPerUnit);
+    const topPercent = (zeroPosUnits / 8) * 100;
 
     // --- Styles ---
     const pointerSize = 6;

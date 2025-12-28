@@ -3,7 +3,13 @@ import React from 'react';
 import DisplayOffsetTab from './subcomponents/DisplayOffsetTab';
 import DisplaySignal from './subcomponents/DisplaySignal';
 
-const Display = ({ displayData, controlPanelData, onUpdate, onSignalUpdate }) => {
+import { useControlPanelStore } from '../stores/useControlPanelStore';
+import { useSignalStore } from '../stores/useSignalStore';
+
+const Display = () => {
+    const { controlPanelData, updateControlPanelData } = useControlPanelStore();
+    const { displayData, updateSignal } = useSignalStore();
+
     const widthUnits = 10;
     const heightUnits = 8;
     const showFrequency = !controlPanelData.timeDomain;
@@ -12,7 +18,7 @@ const Display = ({ displayData, controlPanelData, onUpdate, onSignalUpdate }) =>
         const newChannels = controlPanelData.channels.map(ch =>
             ch.id === channelId ? { ...ch, ...updates } : ch
         );
-        onUpdate({ ...controlPanelData, channels: newChannels });
+        updateControlPanelData({ ...controlPanelData, channels: newChannels });
     };
 
     // Removed manual mapDataToPath as it is now inside DisplaySignal
@@ -66,7 +72,7 @@ const Display = ({ displayData, controlPanelData, onUpdate, onSignalUpdate }) =>
                         <DisplaySignal
                             key={sig.id}
                             displaySignalData={sig}
-                            setDisplaySignalData={(newData) => onSignalUpdate && onSignalUpdate(sig.id, newData)}
+                            setDisplaySignalData={(newData) => updateSignal(sig.id, newData)}
                             controlPanelData={controlPanelData}
                         />
                     ))}

@@ -3,10 +3,16 @@ import classNames from 'classnames';
 import { performAutoSet } from './subcomponents/AutoSet';
 import ControlPanelTime from './subcomponents/ControlPanelTime';
 import ControlPanelChannel from './subcomponents/ControlPanelChannel';
+import { useControlPanelStore } from '../stores/useControlPanelStore';
+import { useSignalStore } from '../stores/useSignalStore';
 
-const ControlPanel = ({ controlPanelData, signalData, onUpdate, onFreqDomain }) => {
+const ControlPanel = () => {
+    const { controlPanelData, updateControlPanelData, setTimeDomain } = useControlPanelStore();
+    const { displayData } = useSignalStore();
+    const signalData = displayData.signalData;
+
     const handleGlobalUpdate = (newData) => {
-        onUpdate(newData);
+        updateControlPanelData(newData);
     };
 
     const handleAutoSet = () => {
@@ -18,7 +24,12 @@ const ControlPanel = ({ controlPanelData, signalData, onUpdate, onFreqDomain }) 
         const newChannels = controlPanelData.channels.map(ch =>
             ch.id === chId ? { ...ch, ...newData } : ch
         );
-        onUpdate({ ...controlPanelData, channels: newChannels });
+        updateControlPanelData({ ...controlPanelData, channels: newChannels });
+    };
+
+    const onFreqDomain = () => {
+        // Toggle domain
+        setTimeDomain(!controlPanelData.timeDomain);
     };
 
     // Calculate Max Samples from Active Channels
@@ -54,7 +65,7 @@ const ControlPanel = ({ controlPanelData, signalData, onUpdate, onFreqDomain }) 
 
             <ControlPanelTime
                 controlPanelData={controlPanelData}
-                onUpdate={onUpdate}
+                onUpdate={handleGlobalUpdate}
                 maxSamples={maxSamples}
             />
 

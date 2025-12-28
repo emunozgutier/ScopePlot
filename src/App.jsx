@@ -1,297 +1,178 @@
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import './App.css';
 
-// ... imports
 // Components
 import MenuBar from './components/MenuBar';
 import Display from './components/Display';
 import ControlPanel from './components/ControlPanel';
 import LoadTestModal from './components/subcomponents/LoadTestModal';
-import { defaultSignal, generateBuffer } from './components/subcomponents/DisplaySignal';
+import { defaultSignal } from './components/subcomponents/DisplaySignal';
 import { getSampledData } from './components/subcomponents/subcomponents/ControlPanelTimeSamples';
 
+// Stores
+import { useMenuBarStore } from './stores/useMenuBarStore';
+import { useControlPanelStore } from './stores/useControlPanelStore';
+import { useSignalStore } from './stores/useSignalStore';
+import { useFunctionGenStore } from './stores/useFunctionGenStore';
 
-
-// Data
-import { initialMenuBarData } from './components/MenuBarData';
-import { initialDisplayData } from './components/DisplayData';
-import { initialControlPanelData } from './components/ControlPanelData';
-import { initialFunctionGenSignalData } from './components/FunctionGenSignalData';
-
-const initialAppData = {
-  menuBarData: initialMenuBarData,
-  FunctionGenSignalData: initialFunctionGenSignalData,
-  displayData: initialDisplayData,
-  controlPanelData: initialControlPanelData
-};
+// Data (Still needed for initial constants if referenced, or handled by stores internally)
+import { initialControlPanelData } from './components/ControlPanelData'; // Backup access if needed
 
 function App() {
-  const [appData, setAppData] = useState(initialAppData);
+  // We don't need local state for data anymore.
+  // We use refs for simulation time to avoid re-renders just for time increment (though loop causes updates anyway)
   const timeRef = useRef(0);
+
+  // Access stores for simulation loop (using getState() to avoid subscriptions in non-rendering scope, 
+  // but here we are in a component so we can subscribe or use getState inside effect)
+  // We don't need to subscribe to the *whole* state here for rendering, just for the loop.
 
   // Initialize Channel 1 with default signal on load
   useEffect(() => {
-    const { timePerUnit, TotalSignalSamples } = initialAppData.controlPanelData;
+    // Access stores directly via getState to set initial values without waiting for render cycle
+    const { timePerUnit, TotalSignalSamples } = useControlPanelStore.getState().controlPanelData;
     const defaultBuffer = defaultSignal(timePerUnit, TotalSignalSamples);
 
-    setAppData(prev => {
-      const newSignals = prev.displayData.signalData.map(sig => {
-        // [REF_CHANGE] sig is now instance of DisplaySignalData (or structured that way)
-        // We must update sig.timeData
-        const newTimeData = defaultBuffer;
-        // To maintain class instance if possible, or just struct
-        // React state usually breaks class methods if we spread, but we only have data fields.
-        return {
-          ...sig,
-          defaultZeroData: false,
-          timeData: newTimeData,
-          timeDataSample: getSampledData(newTimeData, 'time', initialAppData.controlPanelData)
-        };
-      });
+    const currentSignals = useSignalStore.getState().displayData.signalData;
+
+    const newSignals = currentSignals.map(sig => {
+      // Initialize timeData
+      const newTimeData = defaultBuffer;
       return {
-        ...prev,
-        displayData: {
-          ...prev.displayData,
-          signalData: newSignals
-        }
+        ...sig,
+        defaultZeroData: false,
+        timeData: newTimeData,
+        timeDataSample: getSampledData(newTimeData, 'time', useControlPanelStore.getState().controlPanelData)
       };
     });
+
+    useSignalStore.getState().setSignalData(newSignals);
   }, []);
-
-  // Handler for Frequency Domain button (Toggles Domain)
-  const handleFreqDomain = () => {
-    setAppData(prev => {
-      const isTimeDomain = prev.controlPanelData.timeDomain;
-      const newTimeDomain = !isTimeDomain;
-
-      return {
-        ...prev,
-        controlPanelData: {
-          ...prev.controlPanelData,
-          timeDomain: newTimeDomain
-        }
-      };
-    });
-  };
-
-  // Pass handler to ControlPanel
-  const handleControlPanelUpdate = (newData) => {
-    setAppData(prev => ({ ...prev, controlPanelData: newData }));
-  };
-
-  // State setters
-  const setMenuBarData = (newData) => {
-    setAppData(prev => ({ ...prev, menuBarData: newData }));
-  };
-
-  const updateControlPanelData = (newData) => {
-    // Regenerate Samples if Time/Div or Offset changed
-    // We could optimize by checking if relevant keys changed, but for now we do it safe.
-    setAppData(prev => {
-      const newSignals = prev.displayData.signalData.map(sig => {
-        // Access current timeData
-        const currentData = sig.timeData;
-        // Generate new Sample based on NEW control panel data
-        const newSample = getSampledData(currentData, 'time', newData);
-        return { ...sig, timeDataSample: newSample };
-      });
-
-      return {
-        ...prev,
-        controlPanelData: newData,
-        displayData: {
-          ...prev.displayData,
-          signalData: newSignals
-        }
-      };
-    });
-  };
-
-  const handleMenuAction = (action) => {
-    if (action === 'loadTest') {
-      setAppData(prev => ({
-        ...prev,
-        FunctionGenSignalData: { ...prev.FunctionGenSignalData, isOpen: true }
-      }));
-    }
-  };
-
-
-  const handleSaveGenerator = (newData) => {
-    // Save config and Generate Data
-    // Use functional update to ensure we work with the latest state and avoid stale closures
-    setAppData(prev => {
-      let newAppData = { ...prev };
-
-      // Update FunctionGenSignalData (and close modal)
-      newAppData.FunctionGenSignalData = { ...newData, isOpen: false };
-
-      if (newData.enabled) {
-        // Generate Buffer
-        const buffer = generateBuffer(newData);
-        const targetCh = newData.targetChannelId;
-
-        // Update Signal Data - Ensure we create a new displayData object (Immutability)
-        const newSignalData = prev.displayData.signalData.map(sig => {
-          if (sig.id === targetCh) {
-            const newTimeData = buffer;
-            return {
-              ...sig,
-              defaultZeroData: false,
-              timeData: newTimeData,
-              timeDataSample: getSampledData(newTimeData, 'time', prev.controlPanelData)
-            };
-          }
-          return sig;
-        });
-
-        newAppData.displayData = {
-          ...prev.displayData,
-          signalData: newSignalData
-        };
-
-        // Ensure Channel is visible
-        const channelConfig = prev.controlPanelData.channels.find(c => c.id === targetCh);
-        if (channelConfig && !channelConfig.visible) {
-          const newChannels = prev.controlPanelData.channels.map(c =>
-            c.id === targetCh ? { ...c, visible: true } : c
-          );
-          newAppData.controlPanelData = {
-            ...prev.controlPanelData,
-            channels: newChannels
-          };
-        }
-      }
-
-      return newAppData;
-    });
-  };
 
   // Simulation Loop
   useEffect(() => {
     let animationFrameId;
 
     const renderLoop = () => {
-      const { timePerUnit, TotalSignalSamples, timeDomain } = appData.controlPanelData;
+      const controlPanelData = useControlPanelStore.getState().controlPanelData;
+      const { timePerUnit, TotalSignalSamples } = controlPanelData;
 
-      // Only simulate if not in Freq Domain? Or keep simulating in background?
-      // Usually better to pause sim if viewing specific freq snapshot, but let's keep running for now
-      // unless user wants it paused.
+      // If paused or freq domain only? Logic from original App used timeDomain check somewhat?
+      // Original: const { timePerUnit, TotalSignalSamples, timeDomain } = appData.controlPanelData;
 
       timeRef.current += 0.02;
 
-      setAppData(prev => {
-        let hasChanges = false;
+      // Logic from original App
+      const prevSignals = useSignalStore.getState().displayData.signalData;
 
-        const newSignals = prev.displayData.signalData.map(sig => {
-          // Access timeData
-          const tData = sig.timeData;
-          // Check static data at signal root
-          if (sig.defaultZeroData === false && tData && tData.length > 0) {
-            return sig; // Don't re-simulate static data
+      let hasChanges = false;
+      const newSignals = prevSignals.map(sig => {
+        // Access timeData
+        const tData = sig.timeData;
+        // Check static data
+        if (sig.defaultZeroData === false && tData && tData.length > 0) {
+          return sig; // Don't re-simulate
+        }
+
+        // Simulation
+        hasChanges = true;
+        const points = [];
+        const chSettings = controlPanelData.channels.find(c => c.id === sig.id);
+
+        if (!chSettings || !chSettings.visible) {
+          return { ...sig, timeData: [] };
+        }
+
+        const count = Math.min(5000, TotalSignalSamples);
+
+        for (let i = 0; i < count; i++) {
+          const relativeT = (i / count) * (10 * timePerUnit);
+          let val = 0;
+          const phase = timeRef.current * 5;
+          const freq = 1 + sig.id;
+
+          if (sig.id === 0) {
+            val = Math.sin(relativeT * freq + phase);
+          } else if (sig.id === 1) {
+            val = Math.sin(relativeT * freq + phase) > 0 ? 1 : -1;
+          } else if (sig.id === 2) {
+            val = Math.asin(Math.sin(relativeT * freq + phase));
+          } else {
+            val = (Math.random() - 0.5);
           }
+          if (chSettings.noiseFilter) val *= 0.5;
+          points.push([relativeT, val * 3]);
+        }
 
-          // Normal Simulation Logic (Fallback)
-          hasChanges = true; // We are generating new data
-          const points = [];
-          const chSettings = prev.controlPanelData.channels.find(c => c.id === sig.id);
-          if (!chSettings || !chSettings.visible) {
-            return { ...sig, timeData: [] };
-          }
-
-          const count = Math.min(5000, TotalSignalSamples);
-
-          for (let i = 0; i < count; i++) {
-            const relativeT = (i / count) * (10 * timePerUnit);
-            let val = 0;
-            const phase = timeRef.current * 5;
-            const freq = 1 + sig.id;
-
-            if (sig.id === 0) {
-              val = Math.sin(relativeT * freq + phase);
-            } else if (sig.id === 1) {
-              val = Math.sin(relativeT * freq + phase) > 0 ? 1 : -1;
-            } else if (sig.id === 2) {
-              val = Math.asin(Math.sin(relativeT * freq + phase));
-            } else {
-              val = (Math.random() - 0.5);
-            }
-            if (chSettings.noiseFilter) val *= 0.5;
-            points.push([relativeT, val * 3]);
-          }
-
-          const newT = points;
-          const newTSample = getSampledData(newT, 'time', appData.controlPanelData);
-          return { ...sig, timeData: newT, timeDataSample: newTSample };
-        });
-
-        if (!hasChanges) return prev;
-
-        return {
-          ...prev,
-          displayData: {
-            ...prev.displayData,
-            signalData: newSignals
-          }
-        };
+        const newT = points;
+        const newTSample = getSampledData(newT, 'time', controlPanelData);
+        return { ...sig, timeData: newT, timeDataSample: newTSample };
       });
+
+      if (hasChanges) {
+        useSignalStore.getState().setSignalData(newSignals);
+      }
 
       animationFrameId = requestAnimationFrame(renderLoop);
     };
 
     renderLoop();
     return () => cancelAnimationFrame(animationFrameId);
-  }, [appData.controlPanelData.TotalSignalSamples, appData.controlPanelData.timePerUnit, appData.controlPanelData.timeDomain]); // added timeDomain dependency
+  }, []); // Dependencies? Original had specific deps to restart loop. Here we just run it. 
+  // Inside loop we read current state via getState() so it's fresh.
 
+  // Note: Original had dependency on TotalSignalSamples, timePerUnit, timeDomain.
+  // Because those change simulation params. 
+  // Since we use getState(), we get fresh params every frame.
+  // So [] is fine.
 
-  // Handler for individual signal updates from DisplaySignal
-  const updateSignalData = (signalId, newData) => {
-    setAppData(prev => {
-      const newSignals = prev.displayData.signalData.map(sig => {
-        if (sig.id === signalId) {
-          // Determine if we are updating a specific property or replacing
-          // Assuming shallow merge for properties
-          return { ...sig, ...newData };
-        }
-        return sig;
-      });
+  // "Refresh" logic for control updates (previously updateControlPanelData logic):
+  // In original App, updating control panel triggered regeneration of samples for static signals.
+  // We lost that if we just moved state.
+  // ControlPanel store has updateControlPanelData.
+  // We might need to listen to that or just rely on components triggering updates.
+  // Ideally, ControlPanel updates should trigger sample regeneration if needed.
+  // But since this is a refactor, I might have missed the "regenerate samples on time/div change" logic
+  // which was present in App.jsx's `updateControlPanelData`.
 
-      return {
-        ...prev,
-        displayData: {
-          ...prev.displayData,
-          signalData: newSignals
-        }
-      };
+  // I should add a subscription or effect to handle sample regeneration for static signals when ControlPanel changes.
+  // Let's add that effect here.
+
+  const controlPanelData = useControlPanelStore(state => state.controlPanelData);
+
+  useEffect(() => {
+    // Regenerate samples for ALL signals when relevant control panel data changes
+    // Logic from original updateControlPanelData:
+    /*
+        const newSignals = prev.displayData.signalData.map(sig => {
+            const currentData = sig.timeData;
+            const newSample = getSampledData(currentData, 'time', newData);
+            return { ...sig, timeDataSample: newSample };
+        });
+    */
+
+    const currentSignals = useSignalStore.getState().displayData.signalData;
+    const newSignals = currentSignals.map(sig => {
+      // We only need to update samples if we have data
+      if (sig.timeData && sig.timeData.length > 0) {
+        const newSample = getSampledData(sig.timeData, 'time', controlPanelData);
+        return { ...sig, timeDataSample: newSample };
+      }
+      return sig;
     });
-  };
+
+    useSignalStore.getState().setSignalData(newSignals);
+
+  }, [controlPanelData.timePerUnit, controlPanelData.TotalSignalSamples, controlPanelData.timeOffset]); // Add others if needed
 
   return (
     <div className="app-container">
-      <MenuBar
-        menuBarData={appData.menuBarData}
-        setMenuBarData={setMenuBarData}
-        onMenuAction={handleMenuAction}
-      />
+      <MenuBar />
       <div className="main-workspace">
-        <Display
-          displayData={appData.displayData}
-          controlPanelData={appData.controlPanelData}
-          onUpdate={updateControlPanelData}
-          onSignalUpdate={updateSignalData}
-        />
-        <ControlPanel
-          controlPanelData={appData.controlPanelData}
-          signalData={appData.displayData.signalData} // Pass updated signalData structure
-          onUpdate={updateControlPanelData}
-          onFreqDomain={handleFreqDomain}
-        />
+        <Display />
+        <ControlPanel />
       </div>
-      <LoadTestModal
-        data={appData.FunctionGenSignalData}
-        onSave={handleSaveGenerator}
-        onClose={() => setAppData(prev => ({ ...prev, FunctionGenSignalData: { ...prev.FunctionGenSignalData, isOpen: false } }))}
-      />
+      <LoadTestModal />
     </div>
   );
 }
