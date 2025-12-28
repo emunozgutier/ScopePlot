@@ -3,7 +3,7 @@ import { useFunctionGenStore } from '../../stores/useFunctionGenStore';
 import { useSignalStore } from '../../stores/useSignalStore';
 import { useControlPanelStore } from '../../stores/useControlPanelStore';
 import { generateBuffer } from './DisplaySignal';
-import { getSampledData } from './subcomponents/ControlPanelTimeSamples';
+import { getSampledData } from './submodule2/ControlPanelTimeSamples';
 
 
 // Correction: generateBuffer is exported from DisplaySignal.jsx (defaultSignal, generateBuffer)

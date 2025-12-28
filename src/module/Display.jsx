@@ -1,7 +1,7 @@
 import React from 'react';
 
-import DisplayOffsetTab from './subcomponents/DisplayOffsetTab';
-import DisplaySignal from './subcomponents/DisplaySignal';
+import DisplayOffsetTab from './submodule1/DisplayOffsetTab';
+import DisplaySignal from './submodule1/DisplaySignal';
 
 import { useControlPanelStore } from '../stores/useControlPanelStore';
 import { useSignalStore } from '../stores/useSignalStore';

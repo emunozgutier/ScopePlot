@@ -1,5 +1,5 @@
 import React from 'react';
-import DisplayPoint from './subcomponents/DisplayPoint';
+import DisplayPoint from './submodule2/DisplayPoint';
 
 /**
  * DisplaySignal Component

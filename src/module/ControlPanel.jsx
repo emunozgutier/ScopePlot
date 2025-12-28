@@ -1,8 +1,8 @@
 import React from 'react';
 import classNames from 'classnames';
-import { performAutoSet } from './subcomponents/AutoSet';
-import ControlPanelTime from './subcomponents/ControlPanelTime';
-import ControlPanelChannel from './subcomponents/ControlPanelChannel';
+import { performAutoSet } from './submodule1/AutoSet';
+import ControlPanelTime from './submodule1/ControlPanelTime';
+import ControlPanelChannel from './submodule1/ControlPanelChannel';
 import { useControlPanelStore } from '../stores/useControlPanelStore';
 import { useSignalStore } from '../stores/useSignalStore';
 

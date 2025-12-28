@@ -1,5 +1,5 @@
 import React from 'react';
-import Knob from './subcomponents/Knob';
+import Knob from './submodule2/Knob';
 
 const ControlPanelTime = ({ controlPanelData, onUpdate, maxSamples, channelStats }) => {
     const { timePerUnit, TotalSignalSamples, timeOffset, timeDomain } = controlPanelData;

@@ -2,12 +2,12 @@ import { useEffect, useRef } from 'react';
 import './App.css';
 
 // Components
-import MenuBar from './components/MenuBar';
-import Display from './components/Display';
-import ControlPanel from './components/ControlPanel';
-import LoadTestModal from './components/subcomponents/LoadTestModal';
-import { defaultSignal } from './components/subcomponents/DisplaySignal';
-import { getSampledData } from './components/subcomponents/subcomponents/ControlPanelTimeSamples';
+import MenuBar from './module/MenuBar';
+import Display from './module/Display';
+import ControlPanel from './module/ControlPanel';
+import LoadTestModal from './module/submodule1/LoadTestModal';
+import { defaultSignal } from './module/submodule1/DisplaySignal';
+import { getSampledData } from './module/submodule1/submodule2/ControlPanelTimeSamples';
 
 // Stores
 import { useMenuBarStore } from './stores/useMenuBarStore';
