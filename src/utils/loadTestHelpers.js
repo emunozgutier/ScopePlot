@@ -3,6 +3,7 @@ import { useSignalStore } from '../stores/useSignalStore';
 import { useControlPanelStore } from '../stores/useControlPanelStore';
 import { generateBuffer } from '../components/subcomponents/DisplaySignal';
 import { getSampledData } from '../components/subcomponents/subcomponents/ControlPanelTimeSamples';
+import { performAutoSet } from '../components/subcomponents/AutoSet';
 
 /**
  * Runs Load Test 1:
@@ -25,51 +26,17 @@ export const runLoadTest1 = () => {
         { id: 0, shape: 'sine', freq: baseFreq, amp: 5 },       // 1000 Hz
         { id: 1, shape: 'triangle', freq: baseFreq * 0.95, amp: 5 }, // 950 Hz
         { id: 2, shape: 'square', freq: baseFreq * 1.05, amp: 5 },   // 1050 Hz
-        { id: 3, shape: 'sine', freq: baseFreq * 1.0, amp: 5 } // Sawtooth not supported directly in generateBuffer, using sine as placeholder or need to check support.
-        // Wait, the user asked for Sawtooth. 
-        // generateBuffer in DisplaySignal supports: sine, square, triangle.
-        // It DOES NOT support Sawtooth in the version I read.
-        // converting Sawtooth to Triangle or implementing Sawtooth?
-        // logic: val = (2 / Math.PI) * Math.asin(Math.sin(omega * t + phase)); is Triangle.
-        // Sawtooth: 2 * (t * frequency - Math.floor(t * frequency + 0.5))
-        // I should probably add sawtooth support to generateBuffer or just use Triangle for now and note it.
-        // Actually, I'll check generateBuffer again.
+        { id: 3, shape: 'sine', freq: baseFreq * 1.0, amp: 5 } // Sawtooth manual or placeholder
     ];
-
-    // Correction: I checked generateBuffer content in previous turn. It has sine, square, triangle.
-    // I will implement a local sawtooth generator or extend generateBuffer. 
-    // Extending generateBuffer in DisplaySignal.js is cleaner but I'm editing this file now.
-    // I'll stick to 'triangle' for the 4th one or implement local logic. 
-    // User asked for "sawtooth". I should probably add it to generateBuffer to be correct.
-    // I'll add a TODO to update generateBuffer or just implement it inline here if I can't touch that file easily (I can).
-    // Let's use 'triangle' for now to avoid breaking if I don't update the other file immediately, 
-    // BUT I will plan to update DisplaySignal.jsx to support sawtooth if I can.
-    // Actually, I can just write the buffer generation here manually for this test if needed, 
-    // but reusing generateBuffer is better.
-    // Let's assume I will update generateBuffer later or just pass 'triangle' and maybe the user won't notice? 
-    // No, "sawtooth" was specific.
-    // Let's hold on config 3.
-
-    // I will update generateBuffer in DisplaySignal.jsx to support sawtooth as part of this task?
-    // The user didn't explicitly ask for that refactor, but it's needed for "Test 1".
 
     // Constructing updates
     const newChannels = [...controlPanelData.channels];
 
     configs.forEach(cfg => {
-        // 10 periods, 10 samples per period
-        // Freq = cfg.freq
-        // Duration = Periods / Freq = 10 / cfg.freq
-        // SampleRate = SamplesPerPeriod * Freq = 10 * cfg.freq
-
         const periods = 10;
         const samplesPerPeriod = 10;
         const duration = periods / cfg.freq;
         const sampleRate = samplesPerPeriod * cfg.freq;
-
-        // Generate Buffer
-        // We need to support 'sawtooth' in generateBuffer or do it manually.
-        // I will do it manually here if shape is sawtooth, else use generateBuffer.
 
         let buffer = [];
         if (cfg.id === 3) { // Sawtooth manual gen
@@ -77,7 +44,6 @@ export const runLoadTest1 = () => {
             for (let i = 0; i < count; i++) {
                 const t = i / sampleRate;
                 // Sawtooth: 2 * (t * freq - floor(t * freq + 0.5))
-                // or simple (t * freq) % 1 ...
                 const val = 2 * (t * cfg.freq - Math.floor(t * cfg.freq + 0.5));
                 buffer.push([t, val * cfg.amp]);
             }
@@ -105,7 +71,15 @@ export const runLoadTest1 = () => {
         }
     });
 
-    updateControlPanelData({ ...controlPanelData, channels: newChannels });
+    // Final Autoset
+    // 1. Get latest signals from store (updated in loop)
+    const updatedSignalData = useSignalStore.getState().displayData.signalData;
+    // 2. Intermediate CP Data with new channels visibility
+    const intermediateControlPanelData = { ...controlPanelData, channels: newChannels };
+    // 3. Compute Autoset
+    const autoSetData = performAutoSet(intermediateControlPanelData, updatedSignalData);
+    // 4. Update Store
+    updateControlPanelData(autoSetData);
 };
 
 /**
@@ -153,5 +127,9 @@ export const runLoadTest2 = () => {
         }
     });
 
-    updateControlPanelData({ ...controlPanelData, channels: newChannels });
+    // Final Autoset
+    const updatedSignalData = useSignalStore.getState().displayData.signalData;
+    const intermediateControlPanelData = { ...controlPanelData, channels: newChannels };
+    const autoSetData = performAutoSet(intermediateControlPanelData, updatedSignalData);
+    updateControlPanelData(autoSetData);
 };
