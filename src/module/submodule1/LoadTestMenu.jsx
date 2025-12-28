@@ -6,54 +6,10 @@ import { generateSignal } from './SignalGenerator';
 import { getSampledData } from './submodule2/ControlPanelTimeSamples';
 
 
-// Correction: generateBuffer is exported from DisplaySignal.jsx (defaultSignal, generateBuffer)
-// getSampledData is likely from './subcomponents/ControlPanelTimeSamples' relative to App.jsx?
-// App.jsx path: c:\Projects\ScopePlot\src\App.jsx -> ./components/subcomponents/subcomponents/ControlPanelTimeSamples
-// LoadTestModal path: c:\Projects\ScopePlot\src\components\subcomponents\LoadTestModal.jsx
-// So path to generateBuffer (in DisplaySignal.jsx next to this file): './DisplaySignal'
-// Path to ControlPanelTimeSamples: './subcomponents/ControlPanelTimeSamples'? Wait, App.jsx says './components/subcomponents/subcomponents/ControlPanelTimeSamples'.
-// That looks like a mistake in App.jsx or deeply nested.
-// Let's assume standard structure: src/components/subcomponents/ ...
-// If App.jsx relies on `getSampledData`, I should verify its location.
-// In App.jsx: import { getSampledData } from './components/subcomponents/subcomponents/ControlPanelTimeSamples';
-// LoadTestModal is in `src/components/subcomponents/`.
-// So logical path is `./subcomponents/ControlPanelTimeSamples`.
-// But wait, App.jsx imports it from `subcomponents/subcomponents`? That sounds wrong.
-// Let's just blindly use the same logic but fix paths.
-// But first, let's implement the logic.
+
 
 // We need to re-implement handleSaveGenerator logic here.
-/*
-  const handleSaveGenerator = (newData) => {
-    // Save config and Generate Data
-    // Use functional update to ensure we work with the latest state and avoid stale closures
-    setAppData(prev => {
-      let newAppData = { ...prev };
 
-      // Update FunctionGenSignalData (and close modal)
-      newAppData.FunctionGenSignalData = { ...newData, isOpen: false };
-
-      if (newData.enabled) {
-        // Generate Buffer
-        const buffer = generateBuffer(newData);
-        const targetCh = newData.targetChannelId;
-
-        // Update Signal Data
-        // ...
-            const newTimeData = buffer;
-            // ...
-              timeData: newTimeData,
-              timeDataSample: getSampledData(newTimeData, 'time', prev.controlPanelData)
-        // ...
-
-        // Ensure Channel is visible
-        // ...
-      }
-
-      return newAppData;
-    });
-  };
-*/
 
 const LoadTestMenu = () => {
     // Stores
@@ -109,7 +65,7 @@ const LoadTestMenu = () => {
 
         // 2. Logic if enabled
         if (newData.enabled) {
-            // We need generateBuffer. Assuming it's available.
+
             // Since I can't guarantee the import path without checking, I will try to locate it first?
             // No, I'll assume it's imported.
             // Wait, I haven't added the import yet in the ReplacementContent.
