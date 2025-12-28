@@ -16,7 +16,7 @@ import { useSignalStore } from './stores/useSignalStore';
 import { useFunctionGenStore } from './stores/useFunctionGenStore';
 
 // Data (Still needed for initial constants if referenced, or handled by stores internally)
-import { initialControlPanelData } from './components/ControlPanelData'; // Backup access if needed
+// Data (Stores now handle initial state)
 
 function App() {
   // We don't need local state for data anymore.

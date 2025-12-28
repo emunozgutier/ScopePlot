@@ -1,5 +1,21 @@
 import { create } from 'zustand';
-import { initialDisplayData } from '../components/DisplayData';
+// Helper to create initial signal structure
+const createInitialSignal = (id) => ({
+    id,
+    timeData: [], // Array of [time, voltage]
+    frequencyData: null,
+    timeDataSample: [],
+    frequencyDataSample: []
+});
+
+const initialDisplayData = {
+    signalData: [
+        createInitialSignal(0),
+        createInitialSignal(1),
+        createInitialSignal(2),
+        createInitialSignal(3),
+    ]
+};
 
 export const useSignalStore = create((set, get) => ({
     displayData: initialDisplayData,

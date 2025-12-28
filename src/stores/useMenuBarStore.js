@@ -1,5 +1,7 @@
 import { create } from 'zustand';
-import { initialMenuBarData } from '../components/MenuBarData';
+const initialMenuBarData = {
+    activeMenu: null // 'File', 'Math', 'Help'
+};
 
 export const useMenuBarStore = create((set) => ({
     menuBarData: initialMenuBarData,
