@@ -1,3 +1,7 @@
+import { useSignalStore } from '../../stores/useSignalStore';
+import { useControlPanelStore } from '../../stores/useControlPanelStore';
+import { getSampledData } from './submodule2/ControlPanelTimeSamples';
+
 /**
  * Generates signal data based on configuration.
  * Encapsulates standard shapes and custom logic.
@@ -34,4 +38,35 @@ export const generateSignal = (config) => {
     }
 
     return buffer;
+};
+
+/**
+ * Generates and stores signal data for a specific channel.
+ * @param {number} channel - The channel ID (0-3).
+ * @param {Object} config - Signal configuration.
+ */
+export const generateSignalAndStore = (channel, config) => {
+    const data = generateSignal(config);
+    useSignalStore.getState().updateSignal(channel, { timeData: data });
+};
+
+/**
+ * Samples the signal for a specific channel and stores it.
+ * @param {number} channel - The channel ID (0-3).
+ */
+export const SampleSignal = (channel) => {
+    const signalStore = useSignalStore.getState();
+    const controlPanelStore = useControlPanelStore.getState();
+
+    // Find the signal for the given channel
+    const signal = signalStore.displayData.signalData.find(s => s.id === channel);
+
+    if (signal && signal.timeData) {
+        const sampledData = getSampledData(
+            signal.timeData,
+            'time',
+            controlPanelStore.controlPanelData
+        );
+        signalStore.updateSignal(channel, { timeDataSample: sampledData });
+    }
 };

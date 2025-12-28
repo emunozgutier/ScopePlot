@@ -1,8 +1,7 @@
 import { useSignalStore } from '../../stores/useSignalStore';
 import { useControlPanelStore } from '../../stores/useControlPanelStore';
-import { getSampledData } from './submodule2/ControlPanelTimeSamples';
+import { generateSignalAndStore, SampleSignal } from './SignalGenerator';
 import { performAutoSet } from './AutoSet';
-import { generateSignal } from './SignalGenerator';
 
 /**
  * Runs Load Test 1:
@@ -37,18 +36,18 @@ export const runLoadTest1 = () => {
         const duration = periods / cfg.freq;
         const sampleRate = samplesPerPeriod * cfg.freq;
 
-        // Use new SignalGenerator
-        const buffer = generateSignal({
+        // Use new SignalGenerator functions
+        generateSignalAndStore(cfg.id, {
             ...cfg,
             duration,
             sampleRate
         });
 
-        // Update Signal
+        SampleSignal(cfg.id);
+
+        // Update Signal metadata
         updateSignal(cfg.id, {
-            defaultZeroData: false,
-            timeData: buffer,
-            timeDataSample: buffer
+            defaultZeroData: false
         });
 
         // Ensure visible
@@ -58,15 +57,16 @@ export const runLoadTest1 = () => {
         }
     });
 
-    // Final Autoset
-    // 1. Get latest signals from store (updated in loop)
-    const updatedSignalData = useSignalStore.getState().displayData.signalData;
-    // 2. Intermediate CP Data with new channels visibility
-    const intermediateControlPanelData = { ...controlPanelData, channels: newChannels };
-    // 3. Compute Autoset
-    const autoSetData = performAutoSet(intermediateControlPanelData, updatedSignalData);
-    // 4. Update Store
-    updateControlPanelData(autoSetData);
+    // Update channels visibility
+    updateControlPanelData({ ...controlPanelData, channels: newChannels });
+
+    // AutoSet with delay
+    setTimeout(() => {
+        const updatedSignalData = useSignalStore.getState().displayData.signalData;
+        const currentControlPanelData = useControlPanelStore.getState().controlPanelData;
+        const autoSetData = performAutoSet(currentControlPanelData, updatedSignalData);
+        updateControlPanelData(autoSetData);
+    }, 100);
 };
 
 /**
@@ -95,7 +95,8 @@ export const runLoadTest2 = () => {
         const sampleRate = 100000; // High res
         const amp = 5;
 
-        const buffer = generateSignal({
+        // Use new SignalGenerator functions
+        generateSignalAndStore(cfg.id, {
             id: cfg.id,
             shape: cfg.shape,
             freq,
@@ -104,10 +105,10 @@ export const runLoadTest2 = () => {
             sampleRate
         });
 
+        SampleSignal(cfg.id);
+
         updateSignal(cfg.id, {
-            defaultZeroData: false,
-            timeData: buffer,
-            timeDataSample: getSampledData(buffer, 'time', controlPanelData)
+            defaultZeroData: false
         });
 
         const chIndex = newChannels.findIndex(c => c.id === cfg.id);
@@ -116,9 +117,14 @@ export const runLoadTest2 = () => {
         }
     });
 
-    // Final Autoset
-    const updatedSignalData = useSignalStore.getState().displayData.signalData;
-    const intermediateControlPanelData = { ...controlPanelData, channels: newChannels };
-    const autoSetData = performAutoSet(intermediateControlPanelData, updatedSignalData);
-    updateControlPanelData(autoSetData);
+    // Update channels visibility
+    updateControlPanelData({ ...controlPanelData, channels: newChannels });
+
+    // AutoSet with delay
+    setTimeout(() => {
+        const updatedSignalData = useSignalStore.getState().displayData.signalData;
+        const currentControlPanelData = useControlPanelStore.getState().controlPanelData;
+        const autoSetData = performAutoSet(currentControlPanelData, updatedSignalData);
+        updateControlPanelData(autoSetData);
+    }, 100);
 };
