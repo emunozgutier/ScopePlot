@@ -1,18 +1,40 @@
-# React + Vite
+# ScopePlot
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+ScopePlot is a React-based oscilloscope simulator designed to visualize and analyze signal data in real-time. It provides a web-based interface for generating and observing waveforms with adjustable parameters, making it a useful tool for educational and testing purposes.
 
-Currently, two official plugins are available:
+## Live Demo
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+Check out the live version of the application here:  
+**[https://emunozgutier.github.io/ScopePlot/](https://emunozgutier.github.io/ScopePlot/)**
 
-## React Compiler
+## Screenshot
 
-The React Compiler is enabled on this template. See [this documentation](https://react.dev/learn/react-compiler) for more information.
+![ScopePlot Screenshot](public/screenshot.png)
+*(Note: Please add a screenshot of the application named `screenshot.png` to the `public` folder)*
 
-Note: This will impact Vite dev & build performances.
+## Features
 
-## Expanding the ESLint configuration
+- **Real-time Signal Visualization**: Simulate and display sine waves and other signals.
+- **Interactive Controls**: Adjust time samples, frequency, voltage, and offsets.
+- **Dynamic plotting**: Powered by HTML5 Canvas for smooth performance.
+- **Customizable**: Easy to extend and modify signal parameters.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Getting Started
+
+To run this project locally:
+
+1.  Clone the repository.
+2.  Install dependencies:
+    ```bash
+    npm install
+    ```
+3.  Start the development server:
+    ```bash
+    npm run dev
+    ```
+
+## Technologies Used
+
+-   React
+-   Vite
+-   Canvas API
