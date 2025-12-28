@@ -1,7 +1,7 @@
 import React from 'react';
 import Knob from './subcomponents/Knob';
 
-const ControlPanelTime = ({ controlPanelData, onUpdate, maxSamples }) => {
+const ControlPanelTime = ({ controlPanelData, onUpdate, maxSamples, channelStats }) => {
     const { timePerUnit, TotalSignalSamples, timeOffset, timeDomain } = controlPanelData;
 
     const updateGlobal = (key, value) => {
@@ -38,23 +38,33 @@ const ControlPanelTime = ({ controlPanelData, onUpdate, maxSamples }) => {
                     max={100}
                     unit={unitScale}
                 />
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                    <Knob
-                        label="Samples"
-                        value={TotalSignalSamples}
-                        onChange={(val) => {
-                            // Ensure we don't exceed maxSamples if provided
-                            const clamped = maxSamples ? Math.min(val, maxSamples) : val;
-                            updateGlobal('TotalSignalSamples', clamped);
-                        }}
-                        step={10}
-                        min={10}
-                        max={maxSamples || 5000}
-                        stepType="linear"
-                    />
-                    {maxSamples && (
-                        <div style={{ fontSize: '10px', color: '#aaa', marginTop: '2px' }}>
-                            Max: {maxSamples}
+                <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                        <Knob
+                            label="Samples"
+                            value={TotalSignalSamples}
+                            onChange={(val) => {
+                                // Ensure we don't exceed maxSamples if provided
+                                const clamped = maxSamples ? Math.min(val, maxSamples) : val;
+                                updateGlobal('TotalSignalSamples', clamped);
+                            }}
+                            stepType="powerOf2"
+                            min={16}
+                            max={maxSamples || 8192}
+                        />
+                        {maxSamples && (
+                            <div style={{ fontSize: '10px', color: '#aaa', marginTop: '2px' }}>
+                                Max: {maxSamples}
+                            </div>
+                        )}
+                    </div>
+                    {channelStats && channelStats.length > 0 && (
+                        <div style={{ display: 'flex', flexDirection: 'column', marginTop: '15px' }}>
+                            {channelStats.map(stat => (
+                                <div key={stat.id} style={{ fontSize: '10px', color: stat.color, marginBottom: '2px' }}>
+                                    Max: {stat.maxSamples}
+                                </div>
+                            ))}
                         </div>
                     )}
                 </div>

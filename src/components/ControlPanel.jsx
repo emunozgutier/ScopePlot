@@ -32,12 +32,31 @@ const ControlPanel = () => {
         setTimeDomain(!controlPanelData.timeDomain);
     };
 
-    // Calculate Max Samples - actually we want to allow the user to SET the target samples
-    // The previous logic clamped the knob to the current signal length, preventing increase.
-    // We should allow the knob to go up to the system max (e.g. 5000).
-    // The signal generation will then catch up.
-    let maxSamples = 5000;
+    // Calculate Max Samples based on signal data
+    const channelStats = controlPanelData.channels
+        .filter(ch => ch.visible)
+        .map(ch => {
+            const sig = signalData.find(s => s.id === ch.id);
+            // If we have timeData, use its length, otherwise default to something or 0?
+            // If simulating, it might be dynamic. If static, it's fixed.
+            // Let's assume timeData.length is the source of truth for "available samples".
+            // However, the user wants "Max:". If it's a generated signal, we might need a theoretical max?
+            // "on samples there is a max". Usually this refers to the memory depth or the loaded file size.
+            // For now, let's use timeData.length.
+            const max = sig && sig.timeData ? sig.timeData.length : 0;
+            return {
+                id: ch.id,
+                color: ch.color,
+                maxSamples: max
+            };
+        });
 
+    // The knob should be clamped to the maximum AVAILABLE samples across all channels.
+    // Or is it the maximum possible? "make sure you can't select more than the max max".
+    // If Ch1 has 1000 pts and Ch2 has 5000 pts, "max max" is 5000.
+    const maxSamples = channelStats.length > 0
+        ? Math.max(...channelStats.map(s => s.maxSamples))
+        : 5000; // Default fallback if no channels visible
 
     return (
         <div className="control-panel" style={{ width: '300px', backgroundColor: '#222', padding: '10px', overflowY: 'auto' }}>
@@ -60,6 +79,7 @@ const ControlPanel = () => {
                 controlPanelData={controlPanelData}
                 onUpdate={handleGlobalUpdate}
                 maxSamples={maxSamples}
+                channelStats={channelStats}
             />
 
             {controlPanelData.channels.map(ch => (

@@ -16,6 +16,16 @@ const generateSteps = () => {
 
 const STEPS_1_2_5 = generateSteps();
 
+// Generate Power of 2 steps from 2^4 (16) to 2^17 (131072)
+const generatePowerOf2Steps = () => {
+    const steps = [];
+    for (let exp = 4; exp <= 17; exp++) {
+        steps.push(Math.pow(2, exp));
+    }
+    return steps;
+};
+const STEPS_POWER_OF_2 = generatePowerOf2Steps();
+
 const parseValue = (valStr) => {
     if (!valStr) return 0;
     const str = valStr.toString().trim().toLowerCase();
@@ -35,7 +45,7 @@ const Knob = ({
     label,
     min = 0,
     max = 100,
-    stepType = 'linear', // 'linear' or '1-2-5'
+    stepType = 'linear', // 'linear', '1-2-5', or 'powerOf2'
     step = 1,
     color = 'white',
     format // Optional formatter function
@@ -69,6 +79,16 @@ const Knob = ({
         });
     };
 
+    // Helper to find nearest Power of 2 step
+    const getNearestPowerOf2 = (val) => {
+        if (val <= STEPS_POWER_OF_2[0]) return STEPS_POWER_OF_2[0];
+        if (val >= STEPS_POWER_OF_2[STEPS_POWER_OF_2.length - 1]) return STEPS_POWER_OF_2[STEPS_POWER_OF_2.length - 1];
+
+        return STEPS_POWER_OF_2.reduce((prev, curr) => {
+            return (Math.abs(curr - val) < Math.abs(prev - val) ? curr : prev);
+        });
+    };
+
     useEffect(() => {
         const el = knobRef.current;
         if (!el) return;
@@ -86,6 +106,13 @@ const Knob = ({
                 if (newIndex < 0) newIndex = 0;
                 if (newIndex >= STEPS_1_2_5.length) newIndex = STEPS_1_2_5.length - 1;
                 newValue = STEPS_1_2_5[newIndex];
+            } else if (stepType === 'powerOf2') {
+                const current = getNearestPowerOf2(currentVal);
+                const currentIndex = STEPS_POWER_OF_2.indexOf(current);
+                let newIndex = currentIndex + direction;
+                if (newIndex < 0) newIndex = 0;
+                if (newIndex >= STEPS_POWER_OF_2.length) newIndex = STEPS_POWER_OF_2.length - 1;
+                newValue = STEPS_POWER_OF_2[newIndex];
             } else {
                 newValue = currentVal + (direction * step);
                 // Clamp logic: if current is out of bounds, allow moving back in, but clamp strictly once met
@@ -119,6 +146,12 @@ const Knob = ({
         const current = getNearest125(value);
         const currentIndex = STEPS_1_2_5.indexOf(current);
         const totalSteps = STEPS_1_2_5.length;
+        const percent = currentIndex / (totalSteps - 1);
+        angle = MIN_ANGLE + (percent * (MAX_ANGLE - MIN_ANGLE));
+    } else if (stepType === 'powerOf2') {
+        const current = getNearestPowerOf2(value);
+        const currentIndex = STEPS_POWER_OF_2.indexOf(current);
+        const totalSteps = STEPS_POWER_OF_2.length;
         const percent = currentIndex / (totalSteps - 1);
         angle = MIN_ANGLE + (percent * (MAX_ANGLE - MIN_ANGLE));
     } else {
