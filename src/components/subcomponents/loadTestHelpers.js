@@ -1,9 +1,9 @@
 
-import { useSignalStore } from '../stores/useSignalStore';
-import { useControlPanelStore } from '../stores/useControlPanelStore';
-import { generateBuffer } from '../components/subcomponents/DisplaySignal';
-import { getSampledData } from '../components/subcomponents/subcomponents/ControlPanelTimeSamples';
-import { performAutoSet } from '../components/subcomponents/AutoSet';
+import { useSignalStore } from '../../stores/useSignalStore';
+import { useControlPanelStore } from '../../stores/useControlPanelStore';
+import { generateBuffer } from './DisplaySignal';
+import { getSampledData } from './subcomponents/ControlPanelTimeSamples';
+import { performAutoSet } from './AutoSet';
 
 /**
  * Runs Load Test 1:
