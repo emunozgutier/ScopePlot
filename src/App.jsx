@@ -5,7 +5,7 @@ import './App.css';
 import MenuBar from './module/MenuBar';
 import Display from './module/Display';
 import ControlPanel from './module/ControlPanel';
-import LoadTestModal from './module/submodule1/LoadTestModal';
+import LoadTestMenu from './module/submodule1/LoadTestMenu';
 import { defaultSignal } from './module/submodule1/DisplaySignal';
 import { getSampledData } from './module/submodule1/submodule2/ControlPanelTimeSamples';
 
@@ -190,7 +190,7 @@ function App() {
         <Display />
         <ControlPanel />
       </div>
-      <LoadTestModal />
+      <LoadTestMenu />
     </div>
   );
 }

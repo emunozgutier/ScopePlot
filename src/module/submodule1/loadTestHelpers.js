@@ -61,7 +61,7 @@ export const runLoadTest1 = () => {
         updateSignal(cfg.id, {
             defaultZeroData: false,
             timeData: buffer,
-            timeDataSample: getSampledData(buffer, 'time', controlPanelData)
+            timeDataSample: buffer
         });
 
         // Ensure visible

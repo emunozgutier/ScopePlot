@@ -55,7 +55,7 @@ import { getSampledData } from './submodule2/ControlPanelTimeSamples';
   };
 */
 
-const LoadTestModal = () => {
+const LoadTestMenu = () => {
     // Stores
     const { functionGenSignalData: data, setFunctionGenSignalData, closeModal } = useFunctionGenStore();
     const { displayData, setSignalData } = useSignalStore(); // Need full signal list to update strictly?
@@ -159,7 +159,7 @@ const LoadTestModal = () => {
         <div className="modal-overlay">
             <div className="modal-content">
                 <div className="modal-header">
-                    <h2>Function Generator Load Test</h2>
+                    <h2>Function Generator Load Menu</h2>
                     <button className="close-btn" onClick={closeModal}>×</button>
                 </div>
 
@@ -260,4 +260,4 @@ const LoadTestModal = () => {
     );
 };
 
-export default LoadTestModal;
+export default LoadTestMenu;
