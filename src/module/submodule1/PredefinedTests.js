@@ -32,7 +32,7 @@ export const runLoadTest1 = () => {
 
     configs.forEach(cfg => {
         const periods = 100;
-        const samplesPerPeriod = 10;
+        const samplesPerPeriod = 100;
         const duration = periods / cfg.freq;
         const sampleRate = samplesPerPeriod * cfg.freq;
 
@@ -43,7 +43,7 @@ export const runLoadTest1 = () => {
             sampleRate
         });
 
-        SampleSignal(cfg.id);
+        // SampleSignal(cfg.id);
 
         // Update Signal metadata
         updateSignal(cfg.id, {
@@ -66,6 +66,7 @@ export const runLoadTest1 = () => {
         const currentControlPanelData = useControlPanelStore.getState().controlPanelData;
         const autoSetData = performAutoSet(currentControlPanelData, updatedSignalData);
         updateControlPanelData(autoSetData);
+        configs.forEach(cfg => SampleSignal(cfg.id));
     }, 100);
 };
 
@@ -105,7 +106,7 @@ export const runLoadTest2 = () => {
             sampleRate
         });
 
-        SampleSignal(cfg.id);
+        // SampleSignal(cfg.id);
 
         updateSignal(cfg.id, {
             defaultZeroData: false
@@ -126,5 +127,6 @@ export const runLoadTest2 = () => {
         const currentControlPanelData = useControlPanelStore.getState().controlPanelData;
         const autoSetData = performAutoSet(currentControlPanelData, updatedSignalData);
         updateControlPanelData(autoSetData);
+        configs.forEach(cfg => SampleSignal(cfg.id));
     }, 100);
 };
