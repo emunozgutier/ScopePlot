@@ -37,5 +37,35 @@ export const useSignalStore = create((set, get) => ({
             return sig;
         });
         return { displayData: { ...state.displayData, signalData: newSignals } };
+    }),
+
+    /**
+     * Updates only the time domain data for a specific signal.
+     * @param {number} signalId 
+     * @param {Array<Array<number>>} data - [[time, voltage], ...]
+     */
+    updateTimeData: (signalId, data) => set((state) => {
+        const newSignals = state.displayData.signalData.map(sig => {
+            if (sig.id === signalId) {
+                return { ...sig, timeData: data };
+            }
+            return sig;
+        });
+        return { displayData: { ...state.displayData, signalData: newSignals } };
+    }),
+
+    /**
+     * Updates only the frequency domain data for a specific signal.
+     * @param {number} signalId 
+     * @param {Object} data - { data: [{freq, magnitude}, ...] }
+     */
+    updateFrequencyData: (signalId, data) => set((state) => {
+        const newSignals = state.displayData.signalData.map(sig => {
+            if (sig.id === signalId) {
+                return { ...sig, frequencyData: data };
+            }
+            return sig;
+        });
+        return { displayData: { ...state.displayData, signalData: newSignals } };
     })
 }));

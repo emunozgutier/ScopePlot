@@ -5,10 +5,11 @@ import ControlPanelTime from './submodule1/ControlPanelTime';
 import ControlPanelChannel from './submodule1/ControlPanelChannel';
 import { useControlPanelStore } from '../stores/useControlPanelStore';
 import { useSignalStore } from '../stores/useSignalStore';
+import { computeFFT } from './submodule1/fft';
 
 const ControlPanel = () => {
     const { controlPanelData, updateControlPanelData, setTimeDomain } = useControlPanelStore();
-    const { displayData } = useSignalStore();
+    const { displayData, updateFrequencyData } = useSignalStore();
     const signalData = displayData.signalData;
 
     const handleGlobalUpdate = (newData) => {
@@ -28,8 +29,28 @@ const ControlPanel = () => {
     };
 
     const onFreqDomain = () => {
-        // Toggle domain
-        setTimeDomain(!controlPanelData.timeDomain);
+        const newTimeDomain = !controlPanelData.timeDomain;
+
+        if (!newTimeDomain) {
+            // Switching TO Frequency Domain -> Compute FFT
+            signalData.forEach(sig => {
+                if (sig.timeData && sig.timeData.length > 0) {
+                    // Assuming sample rate is roughly derived or fixed.
+                    // For Test 1, sampleRate is in config but not readily available on signal object.
+                    // Estimate sample rate from current view settings:
+                    // sampleRate = TotalSignalSamples / TotalTime
+
+                    const totalTime = controlPanelData.timePerUnit * 10;
+                    const sampleRate = controlPanelData.TotalSignalSamples / totalTime;
+
+                    const fftData = computeFFT(sig.timeData, sampleRate);
+                    // Use the new updateFrequencyData action
+                    updateFrequencyData(sig.id, { data: fftData });
+                }
+            });
+        }
+
+        setTimeDomain(newTimeDomain);
     };
 
     // Calculate Max Samples based on signal data
@@ -37,12 +58,6 @@ const ControlPanel = () => {
         .filter(ch => ch.visible)
         .map(ch => {
             const sig = signalData.find(s => s.id === ch.id);
-            // If we have timeData, use its length, otherwise default to something or 0?
-            // If simulating, it might be dynamic. If static, it's fixed.
-            // Let's assume timeData.length is the source of truth for "available samples".
-            // However, the user wants "Max:". If it's a generated signal, we might need a theoretical max?
-            // "on samples there is a max". Usually this refers to the memory depth or the loaded file size.
-            // For now, let's use timeData.length.
             const max = sig && sig.timeData ? sig.timeData.length : 0;
             return {
                 id: ch.id,
@@ -51,12 +66,9 @@ const ControlPanel = () => {
             };
         });
 
-    // The knob should be clamped to the maximum AVAILABLE samples across all channels.
-    // Or is it the maximum possible? "make sure you can't select more than the max max".
-    // If Ch1 has 1000 pts and Ch2 has 5000 pts, "max max" is 5000.
     const maxSamples = channelStats.length > 0
         ? Math.max(...channelStats.map(s => s.maxSamples))
-        : 5000; // Default fallback if no channels visible
+        : 5000;
 
     return (
         <div className="control-panel" style={{ width: '300px', backgroundColor: '#222', padding: '10px', overflowY: 'auto' }}>
@@ -69,7 +81,11 @@ const ControlPanel = () => {
                     <button className="btn-secondary" style={{ padding: '4px 8px', fontSize: '11px' }} onClick={handleAutoSet}>
                         Auto Set
                     </button>
-                    <button className="btn-secondary" style={{ padding: '4px 8px', fontSize: '11px' }} onClick={onFreqDomain}>
+                    <button
+                        className={classNames("btn-secondary", { "blink": !controlPanelData.timeDomain })}
+                        style={{ padding: '4px 8px', fontSize: '11px' }}
+                        onClick={onFreqDomain}
+                    >
                         Freq Domain
                     </button>
                 </div>

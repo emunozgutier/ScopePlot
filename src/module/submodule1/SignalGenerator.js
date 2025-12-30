@@ -47,7 +47,7 @@ export const generateSignal = (config) => {
  */
 export const generateSignalAndStore = (channel, config) => {
     const data = generateSignal(config);
-    useSignalStore.getState().updateSignal(channel, { timeData: data });
+    useSignalStore.getState().updateTimeData(channel, data);
 };
 
 /**
