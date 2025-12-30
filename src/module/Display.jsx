@@ -45,7 +45,15 @@ const Display = () => {
             {/* Sidebar for Offset Tabs */}
             <div
                 ref={sidebarRef}
-                style={{ width: '50px', height: '100%', position: 'relative', backgroundColor: '#111', borderRight: '1px solid #333', overflow: 'hidden' }}
+                style={{
+                    width: '50px',
+                    height: 'calc(100% - 28px)',
+                    marginTop: '14px',
+                    position: 'relative',
+                    backgroundColor: '#111',
+                    borderRight: '1px solid #333',
+                    overflow: 'hidden'
+                }}
             >
                 {controlPanelData.channels.map(ch => (
                     <DisplayOffsetTab
