@@ -9,14 +9,14 @@ import { computeFFT } from '../utils/fft';
 
 const ControlPanel = () => {
     const { controlPanelData, updateControlPanelData, setTimeDomain } = useControlPanelStore();
-    const { signalData, calculateFrequencyData } = useSignalStore();
+    const { signalList, calculateFrequencyData } = useSignalStore();
 
     const handleGlobalUpdate = (newData) => {
         updateControlPanelData(newData);
     };
 
     const handleAutoSet = () => {
-        const newData = performAutoSet(controlPanelData, signalData);
+        const newData = performAutoSet(controlPanelData, signalList);
         handleGlobalUpdate(newData);
     };
 
@@ -32,7 +32,7 @@ const ControlPanel = () => {
 
         if (!newTimeDomain) {
             // Switching TO Frequency Domain -> Compute FFT
-            signalData.forEach(sig => {
+            signalList.forEach(sig => {
                 if (sig.timeData && sig.timeData.length > 0) {
                     calculateFrequencyData(sig.id);
                 }
@@ -46,7 +46,7 @@ const ControlPanel = () => {
     const channelStats = controlPanelData.channels
         .filter(ch => ch.visible)
         .map(ch => {
-            const sig = signalData.find(s => s.id === ch.id);
+            const sig = signalList.find(s => s.id === ch.id);
             const max = sig && sig.timeData ? sig.timeData.length : 0;
             return {
                 id: ch.id,

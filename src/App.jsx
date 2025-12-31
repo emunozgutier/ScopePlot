@@ -33,7 +33,7 @@ function App() {
     const { timePerUnit, TotalSignalSamples } = useControlPanelStore.getState().controlPanelData;
     const defaultBuffer = defaultSignal(timePerUnit, TotalSignalSamples);
 
-    const currentSignals = useSignalStore.getState().signalData;
+    const currentSignals = useSignalStore.getState().signalList;
 
     const newSignals = currentSignals.map(sig => {
       // Initialize timeData
@@ -46,7 +46,7 @@ function App() {
       };
     });
 
-    useSignalStore.getState().setSignalData(newSignals);
+    useSignalStore.setState({ signalList: newSignals });
   }, []);
 
   // Simulation Loop
@@ -63,7 +63,7 @@ function App() {
       timeRef.current += 0.02;
 
       // Logic from original App
-      const prevSignals = useSignalStore.getState().displayData.signalData;
+      const prevSignals = useSignalStore.getState().signalList;
 
       let hasChanges = false;
       const newSignals = prevSignals.map(sig => {
@@ -128,7 +128,7 @@ function App() {
       });
 
       if (hasChanges) {
-        useSignalStore.getState().setSignalData(newSignals);
+        useSignalStore.setState({ signalList: newSignals });
       }
 
       animationFrameId = requestAnimationFrame(renderLoop);
@@ -169,7 +169,7 @@ function App() {
         });
     */
 
-    const currentSignals = useSignalStore.getState().signalData;
+    const currentSignals = useSignalStore.getState().signalList;
     const newSignals = currentSignals.map(sig => {
       // We only need to update samples if we have data
       if (sig.timeData && sig.timeData.length > 0) {
@@ -179,7 +179,7 @@ function App() {
       return sig;
     });
 
-    useSignalStore.getState().setSignalData(newSignals);
+    useSignalStore.setState({ signalList: newSignals });
 
   }, [controlPanelData.timePerUnit, controlPanelData.TotalSignalSamples, controlPanelData.timeOffset]); // Add others if needed
 

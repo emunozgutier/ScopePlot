@@ -14,7 +14,7 @@ import { getSampledData } from './submodule2/ControlPanelTimeSamples';
 const LoadTestMenu = () => {
     // Stores
     const { functionGenSignalData: data, setFunctionGenSignalData, closeModal } = useFunctionGenStore();
-    const { signalData, setSignalData } = useSignalStore(); // Need full signal list to update strictly?
+    const { signalList } = useSignalStore();
     // Actually we can use updateSignal if we target one ID.
     const { controlPanelData, updateControlPanelData } = useControlPanelStore();
 
@@ -81,7 +81,7 @@ const LoadTestMenu = () => {
             // But we have useSignalStore. 
             // We need to update specific signal.
 
-            const currentSignals = useSignalStore.getState().signalData;
+            const currentSignals = useSignalStore.getState().signalList;
             const targetSignal = currentSignals.find(s => s.id === targetCh);
 
             if (targetSignal) {
@@ -91,11 +91,10 @@ const LoadTestMenu = () => {
 
                 const newTSample = getSampledData(buffer, 'time', controlPanelData);
 
-                useSignalStore.getState().updateSignal(targetCh, {
-                    defaultZeroData: false,
-                    timeData: buffer,
-                    timeDataSample: newTSample
-                });
+                const newSignals = currentSignals.map(s =>
+                    s.id === targetCh ? { ...s, defaultZeroData: false, timeData: buffer, timeDataSample: newTSample } : s
+                );
+                useSignalStore.setState({ signalList: newSignals });
             }
 
             // Ensure Channel is visible

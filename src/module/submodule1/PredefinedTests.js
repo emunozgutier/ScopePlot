@@ -15,7 +15,7 @@ import { performAutoSet } from './AutoSet';
 export const runLoadTest1 = () => {
     const signalStore = useSignalStore.getState();
     const controlPanelStore = useControlPanelStore.getState();
-    const { updateSignal } = signalStore;
+    // const { updateSignal } = signalStore;
     const { controlPanelData, updateControlPanelData } = controlPanelStore;
 
     // Configuration for Test 1
@@ -46,9 +46,10 @@ export const runLoadTest1 = () => {
         // SampleSignal(cfg.id);
 
         // Update Signal metadata
-        updateSignal(cfg.id, {
-            defaultZeroData: false
-        });
+        // Update Signal metadata manually
+        const currentList = useSignalStore.getState().signalList;
+        const updatedList = currentList.map(s => s.id === cfg.id ? { ...s, defaultZeroData: false } : s);
+        useSignalStore.setState({ signalList: updatedList });
 
         // Ensure visible
         const chIndex = newChannels.findIndex(c => c.id === cfg.id);
@@ -62,7 +63,7 @@ export const runLoadTest1 = () => {
 
     // AutoSet with delay
     setTimeout(() => {
-        const updatedSignalData = useSignalStore.getState().signalData;
+        const updatedSignalData = useSignalStore.getState().signalList;
         const currentControlPanelData = useControlPanelStore.getState().controlPanelData;
         const autoSetData = performAutoSet(currentControlPanelData, updatedSignalData);
         updateControlPanelData(autoSetData);
@@ -78,7 +79,7 @@ export const runLoadTest1 = () => {
 export const runLoadTest2 = () => {
     const signalStore = useSignalStore.getState();
     const controlPanelStore = useControlPanelStore.getState();
-    const { updateSignal } = signalStore;
+    // const { updateSignal } = signalStore;
     const { controlPanelData, updateControlPanelData } = controlPanelStore;
 
     const configs = [
@@ -108,9 +109,9 @@ export const runLoadTest2 = () => {
 
         // SampleSignal(cfg.id);
 
-        updateSignal(cfg.id, {
-            defaultZeroData: false
-        });
+        const currentList2 = useSignalStore.getState().signalList;
+        const updatedList2 = currentList2.map(s => s.id === cfg.id ? { ...s, defaultZeroData: false } : s);
+        useSignalStore.setState({ signalList: updatedList2 });
 
         const chIndex = newChannels.findIndex(c => c.id === cfg.id);
         if (chIndex !== -1) {
@@ -123,7 +124,7 @@ export const runLoadTest2 = () => {
 
     // AutoSet with delay
     setTimeout(() => {
-        const updatedSignalData = useSignalStore.getState().signalData;
+        const updatedSignalData = useSignalStore.getState().signalList;
         const currentControlPanelData = useControlPanelStore.getState().controlPanelData;
         const autoSetData = performAutoSet(currentControlPanelData, updatedSignalData);
         updateControlPanelData(autoSetData);

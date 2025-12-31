@@ -1,8 +1,8 @@
 import { snapTo125 } from './submodule2/KnobNumber';
 
-export const performAutoSet = (controlPanelData, signalData) => {
+export const performAutoSet = (controlPanelData, signalList) => {
     const visibleChannels = controlPanelData.channels.filter(ch => ch.visible);
-    const activeSignals = signalData.filter(sig =>
+    const activeSignals = signalList.filter(sig =>
         visibleChannels.some(ch => ch.id === sig.id) && sig.timeData?.length > 0
     );
 
@@ -27,7 +27,7 @@ export const performAutoSet = (controlPanelData, signalData) => {
     // 2. Voltage Logic
     const newChannels = controlPanelData.channels.map(ch => {
         if (!ch.visible) return ch;
-        const sig = signalData.find(s => s.id === ch.id);
+        const sig = signalList.find(s => s.id === ch.id);
 
         // Safety check for signal data
         if (!sig || !sig.timeData || sig.timeData.length === 0) return ch;

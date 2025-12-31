@@ -59,7 +59,7 @@ export const SampleSignal = (channel) => {
     const controlPanelStore = useControlPanelStore.getState();
 
     // Find the signal for the given channel
-    const signal = signalStore.signalData.find(s => s.id === channel);
+    const signal = signalStore.signalList.find(s => s.id === channel);
 
     if (signal && signal.timeData) {
         const sampledData = getSampledData(
@@ -67,6 +67,14 @@ export const SampleSignal = (channel) => {
             'time',
             controlPanelStore.controlPanelData
         );
-        signalStore.updateSignal(channel, { timeDataSample: sampledData });
+
+        // Manual update as updateSignal/calculateDataSample are limited/buggy
+        const newSignals = signalStore.signalList.map(sig => {
+            if (sig.id === channel) {
+                return { ...sig, timeDataSample: sampledData };
+            }
+            return sig;
+        });
+        useSignalStore.setState({ signalList: newSignals });
     }
 };

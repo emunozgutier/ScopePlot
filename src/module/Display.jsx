@@ -8,7 +8,7 @@ import { useSignalStore } from '../stores/useSignalStore';
 
 const Display = () => {
     const { controlPanelData, updateControlPanelData } = useControlPanelStore();
-    const { signalData, updateSignal } = useSignalStore();
+    const { signalList, updateTimeData } = useSignalStore();
 
     const widthUnits = 10;
     const heightUnits = 8;
@@ -76,11 +76,11 @@ const Display = () => {
                     preserveAspectRatio="none"
                     style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0 }}
                 >
-                    {signalData.map((sig) => (
+                    {signalList.map((sig) => (
                         <DisplaySignal
                             key={sig.id}
                             displaySignalData={sig}
-                            setDisplaySignalData={(newData) => updateSignal(sig.id, newData)}
+                            setDisplaySignalData={(newData) => updateTimeData(sig.id, newData.timeData)}
                             controlPanelData={controlPanelData}
                         />
                     ))}
