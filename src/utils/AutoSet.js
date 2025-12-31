@@ -1,4 +1,4 @@
-import { snapTo125 } from '../module/submodule1/submodule2/KnobNumber';
+import { snapTo125 } from './KnobNumber';
 
 export const performAutoSet = (controlPanelData, signalList) => {
     const visibleChannels = controlPanelData.channels.filter(ch => ch.visible);

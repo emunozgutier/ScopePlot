@@ -1,7 +1,7 @@
 import React from 'react';
 import classNames from 'classnames';
 import Knob from './submodule2/Knob';
-import { formatMetric } from './submodule2/KnobNumber';
+import { formatMetric } from '../../utils/KnobNumber';
 
 const ControlPanelChannel = ({ channel, onUpdate }) => {
     const updateChannel = (updates) => {

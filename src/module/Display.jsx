@@ -7,7 +7,6 @@ import { useControlPanelStore } from '../stores/useControlPanelStore';
 import { useSignalStore } from '../stores/useSignalStore';
 
 import { defaultSignal } from '../utils/SignalGenerator';
-import { getSampledData } from './submodule1/submodule2/ControlPanelTimeSamples';
 
 const Display = () => {
     const { controlPanelData, updateControlPanelData } = useControlPanelStore();
