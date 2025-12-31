@@ -42,5 +42,7 @@ export function computeFFT(voltageTimeData, sampleRate) {
         result.push({ freq, magnitude });
     }
 
-    return result;
+    // you need to pair the fft data with (freq, voltage) for the frequency domain data
+    const frequencyData = result.map(d => [d.freq, d.magnitude]);
+    return frequencyData;
 }
