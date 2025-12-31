@@ -1,6 +1,6 @@
 import { useSignalStore } from '../stores/useSignalStore';
 import { useControlPanelStore } from '../stores/useControlPanelStore';
-import { generateSignalAndStore, SampleSignal } from './SignalGenerator';
+import { generateSignalAndStore } from './SignalGenerator';
 import { performAutoSet } from './AutoSet';
 
 /**
@@ -43,7 +43,7 @@ export const runLoadTest1 = () => {
             sampleRate
         });
 
-        // SampleSignal(cfg.id);
+
 
         // Update Signal metadata
         // Update Signal metadata manually
@@ -67,7 +67,10 @@ export const runLoadTest1 = () => {
         const currentControlPanelData = useControlPanelStore.getState().controlPanelData;
         const autoSetData = performAutoSet(currentControlPanelData, updatedSignalData);
         updateControlPanelData(autoSetData);
-        configs.forEach(cfg => SampleSignal(cfg.id));
+        configs.forEach(cfg => {
+            const sampleCount = currentControlPanelData.TotalSignalSamples || 1024;
+            useSignalStore.getState().calculateDataSample(cfg.id, sampleCount);
+        });
     }, 100);
 };
 
@@ -107,7 +110,7 @@ export const runLoadTest2 = () => {
             sampleRate
         });
 
-        // SampleSignal(cfg.id);
+
 
         const currentList2 = useSignalStore.getState().signalList;
         const updatedList2 = currentList2.map(s => s.id === cfg.id ? { ...s, defaultZeroData: false } : s);
@@ -128,6 +131,9 @@ export const runLoadTest2 = () => {
         const currentControlPanelData = useControlPanelStore.getState().controlPanelData;
         const autoSetData = performAutoSet(currentControlPanelData, updatedSignalData);
         updateControlPanelData(autoSetData);
-        configs.forEach(cfg => SampleSignal(cfg.id));
+        configs.forEach(cfg => {
+            const sampleCount = currentControlPanelData.TotalSignalSamples || 1024;
+            useSignalStore.getState().calculateDataSample(cfg.id, sampleCount);
+        });
     }, 100);
 };

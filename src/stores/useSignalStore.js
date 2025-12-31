@@ -38,6 +38,10 @@ const initialSignalData = [
 ];
 
 const signalSampler = (signalData, sampleCount) => {
+    if (signalData.length <= sampleCount) {
+        return signalData;
+    }
+
     // Implement signal sampling logic here
     const sampledData = signalData.map((point, index) => {
         if (index % sampleCount === 0) {
@@ -93,7 +97,7 @@ export const useSignalStore = create((set, get) => ({
     }),
 
     calculateDataSample: (signalId, sampleCount) => set((state) => {
-        const signal = state.signalData.find(sig => sig.id === signalId);
+        const signal = state.signalList.find(sig => sig.id === signalId);
 
         if (!signal || !signal.timeData || signal.timeData.length < 2) {
             return state;

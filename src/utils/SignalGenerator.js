@@ -49,34 +49,7 @@ export const generateSignalAndStore = (channel, config) => {
     useSignalStore.getState().updateTimeData(channel, data);
 };
 
-/**
- * Samples the signal for a specific channel and stores it.
- * @param {number} channel - The channel ID (0-3).
- */
-export const SampleSignal = (channel) => {
-    const signalStore = useSignalStore.getState();
-    const controlPanelStore = useControlPanelStore.getState();
 
-    // Find the signal for the given channel
-    const signal = signalStore.signalList.find(s => s.id === channel);
-
-    if (signal && signal.timeData) {
-        const sampledData = getSampledData(
-            signal.timeData,
-            'time',
-            controlPanelStore.controlPanelData
-        );
-
-        // Manual update as updateSignal/calculateDataSample are limited/buggy
-        const newSignals = signalStore.signalList.map(sig => {
-            if (sig.id === channel) {
-                return { ...sig, timeDataSample: sampledData };
-            }
-            return sig;
-        });
-        useSignalStore.setState({ signalList: newSignals });
-    }
-};
 
 /**
  * Generates a default zero-voltage signal.
