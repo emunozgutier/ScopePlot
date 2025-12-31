@@ -1,14 +1,37 @@
 import { create } from 'zustand';
 import { computeFFT } from '../utils/fft';
 
-// Helper to create initial signal structure
-const createInitialSignal = (id) => ({
-    id,
-    timeData: [], // Array of [time, voltage]
-    frequencyData: null,
-    timeDataSample: [],
-    frequencyDataSample: []
-});
+import { initialControlPanelData } from './useControlPanelStore';
+import { getSampledData } from '../module/submodule1/submodule2/ControlPanelTimeSamples';
+
+// Helper to generate initial time data locally to avoid circular dependencies
+const generateInitialTimeData = (timePerDiv, totalSamples) => {
+    const points = [];
+    const totalTime = timePerDiv * 10;
+    if (totalSamples <= 0) return points;
+    if (totalSamples === 1) return [[0, 0]];
+    for (let i = 0; i < totalSamples; i++) {
+        const t = (i / (totalSamples - 1)) * totalTime;
+        points.push([t, 0]);
+    }
+    return points;
+};
+
+// Helper to create initial signal structure with data
+const createInitialSignal = (id) => {
+    const { timePerUnit, TotalSignalSamples } = initialControlPanelData;
+    const initialTimeData = generateInitialTimeData(timePerUnit, TotalSignalSamples);
+    const initialSample = getSampledData(initialTimeData, 'time', initialControlPanelData);
+
+    return {
+        id,
+        defaultZeroData: true, // Flag to indicate initialization state (if needed by logic)
+        timeData: initialTimeData,
+        frequencyData: null,
+        timeDataSample: initialSample,
+        frequencyDataSample: []
+    };
+};
 
 const initialSignalData = [
     createInitialSignal(0),
@@ -75,16 +98,14 @@ export const useSignalStore = create((set, get) => ({
     calculateDataSample: (signalId, sampleCount) => set((state) => {
         const signal = state.signalData.find(sig => sig.id === signalId);
 
-        ///////////////////////////////////////////////////
-        // Time data first
-        ///////////////////////////////////////////////////
         if (!signal || !signal.timeData || signal.timeData.length < 2) {
             return state;
         }
 
         const sampledTimeData = signalSampler(signal.timeData, sampleCount);
 
-        if (signal.frequencyData) {
+        // check if frequency data is not null and not empty
+        if (signal.frequencyData && signal.frequencyData.length > 0) {
             const sampledFrequencyData = signalSampler(signal.frequencyData, sampleCount);
             const newSignals = state.signalList.map(sig => {
                 if (sig.id === signalId) {
@@ -103,6 +124,5 @@ export const useSignalStore = create((set, get) => ({
             });
             return { signalList: newSignals };
         }
-
     })
 }));

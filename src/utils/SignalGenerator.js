@@ -78,3 +78,27 @@ export const SampleSignal = (channel) => {
         useSignalStore.setState({ signalList: newSignals });
     }
 };
+
+/**
+ * Generates a default zero-voltage signal.
+ * @param {number} timePerDiv - Time per division in seconds.
+ * @param {number} totalSamples - Total number of samples.
+ * @returns {Array<Array<number>>} Array of [time, voltage] points.
+ */
+export const defaultSignal = (timePerDiv, totalSamples) => {
+    const points = [];
+    const totalTime = timePerDiv * 10;
+
+    if (totalSamples <= 0) return points;
+
+    if (totalSamples === 1) {
+        return [[0, 0]];
+    }
+
+    for (let i = 0; i < totalSamples; i++) {
+        const t = (i / (totalSamples - 1)) * totalTime;
+        const v = 0;
+        points.push([t, v]);
+    }
+    return points;
+};

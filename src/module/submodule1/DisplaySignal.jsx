@@ -105,25 +105,7 @@ const DisplaySignal = ({ displaySignalData, setDisplaySignalData, controlPanelDa
 /**
  * Generates a default zero-voltage signal.
  */
-export const defaultSignal = (timePerDiv, totalSamples) => {
-    console.log("DisplaySignal.defaultSignal called with:", { timePerDiv, totalSamples });
-    const points = [];
-    const totalTime = timePerDiv * 10;
 
-    if (totalSamples <= 0) return points;
-
-    if (totalSamples === 1) {
-        return [[0, 0]];
-    }
-
-    for (let i = 0; i < totalSamples; i++) {
-        const t = (i / (totalSamples - 1)) * totalTime;
-        const v = 0;
-        points.push([t, v]);
-    }
-    console.log("DisplaySignal.defaultSignal generated points:", points.length);
-    return points;
-};
 
 
 
