@@ -1,6 +1,6 @@
-import { useSignalStore } from '../../stores/useSignalStore';
-import { useControlPanelStore } from '../../stores/useControlPanelStore';
-import { generateSignalAndStore, SampleSignal } from '../../utils/SignalGenerator';
+import { useSignalStore } from '../stores/useSignalStore';
+import { useControlPanelStore } from '../stores/useControlPanelStore';
+import { generateSignalAndStore, SampleSignal } from './SignalGenerator';
 import { performAutoSet } from './AutoSet';
 
 /**

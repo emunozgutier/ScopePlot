@@ -2,7 +2,7 @@ import React from 'react';
 import classNames from 'classnames';
 import { useMenuBarStore } from '../stores/useMenuBarStore';
 import { useFunctionGenStore } from '../stores/useFunctionGenStore';
-import { runLoadTest1, runLoadTest2 } from './submodule1/PredefinedTests';
+import { runLoadTest1, runLoadTest2 } from '../utils/PredefinedTests';
 
 const MenuBarContent = () => {
     const { menuBarData, setMenuBarData } = useMenuBarStore();

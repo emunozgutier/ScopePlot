@@ -1,6 +1,6 @@
 import React from 'react';
 import classNames from 'classnames';
-import { performAutoSet } from './submodule1/AutoSet';
+import { performAutoSet } from '../utils/AutoSet';
 import ControlPanelTime from './submodule1/ControlPanelTime';
 import ControlPanelChannel from './submodule1/ControlPanelChannel';
 import { useControlPanelStore } from '../stores/useControlPanelStore';
