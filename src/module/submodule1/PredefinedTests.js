@@ -1,6 +1,6 @@
 import { useSignalStore } from '../../stores/useSignalStore';
 import { useControlPanelStore } from '../../stores/useControlPanelStore';
-import { generateSignalAndStore, SampleSignal } from './SignalGenerator';
+import { generateSignalAndStore, SampleSignal } from '../../utils/SignalGenerator';
 import { performAutoSet } from './AutoSet';
 
 /**
@@ -62,7 +62,7 @@ export const runLoadTest1 = () => {
 
     // AutoSet with delay
     setTimeout(() => {
-        const updatedSignalData = useSignalStore.getState().displayData.signalData;
+        const updatedSignalData = useSignalStore.getState().signalData;
         const currentControlPanelData = useControlPanelStore.getState().controlPanelData;
         const autoSetData = performAutoSet(currentControlPanelData, updatedSignalData);
         updateControlPanelData(autoSetData);
@@ -123,7 +123,7 @@ export const runLoadTest2 = () => {
 
     // AutoSet with delay
     setTimeout(() => {
-        const updatedSignalData = useSignalStore.getState().displayData.signalData;
+        const updatedSignalData = useSignalStore.getState().signalData;
         const currentControlPanelData = useControlPanelStore.getState().controlPanelData;
         const autoSetData = performAutoSet(currentControlPanelData, updatedSignalData);
         updateControlPanelData(autoSetData);

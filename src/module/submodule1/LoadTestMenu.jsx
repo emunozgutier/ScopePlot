@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useFunctionGenStore } from '../../stores/useFunctionGenStore';
 import { useSignalStore } from '../../stores/useSignalStore';
 import { useControlPanelStore } from '../../stores/useControlPanelStore';
-import { generateSignal } from './SignalGenerator';
+import { generateSignal } from '../../utils/SignalGenerator';
 import { getSampledData } from './submodule2/ControlPanelTimeSamples';
 
 
@@ -14,7 +14,7 @@ import { getSampledData } from './submodule2/ControlPanelTimeSamples';
 const LoadTestMenu = () => {
     // Stores
     const { functionGenSignalData: data, setFunctionGenSignalData, closeModal } = useFunctionGenStore();
-    const { displayData, setSignalData } = useSignalStore(); // Need full signal list to update strictly?
+    const { signalData, setSignalData } = useSignalStore(); // Need full signal list to update strictly?
     // Actually we can use updateSignal if we target one ID.
     const { controlPanelData, updateControlPanelData } = useControlPanelStore();
 
@@ -81,7 +81,7 @@ const LoadTestMenu = () => {
             // But we have useSignalStore. 
             // We need to update specific signal.
 
-            const currentSignals = useSignalStore.getState().displayData.signalData;
+            const currentSignals = useSignalStore.getState().signalData;
             const targetSignal = currentSignals.find(s => s.id === targetCh);
 
             if (targetSignal) {

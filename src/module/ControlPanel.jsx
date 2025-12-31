@@ -5,12 +5,11 @@ import ControlPanelTime from './submodule1/ControlPanelTime';
 import ControlPanelChannel from './submodule1/ControlPanelChannel';
 import { useControlPanelStore } from '../stores/useControlPanelStore';
 import { useSignalStore } from '../stores/useSignalStore';
-import { computeFFT } from './submodule1/fft';
+import { computeFFT } from '../utils/fft';
 
 const ControlPanel = () => {
     const { controlPanelData, updateControlPanelData, setTimeDomain } = useControlPanelStore();
-    const { displayData, updateFrequencyData } = useSignalStore();
-    const signalData = displayData.signalData;
+    const { signalData, calculateFrequencyData } = useSignalStore();
 
     const handleGlobalUpdate = (newData) => {
         updateControlPanelData(newData);
@@ -35,17 +34,7 @@ const ControlPanel = () => {
             // Switching TO Frequency Domain -> Compute FFT
             signalData.forEach(sig => {
                 if (sig.timeData && sig.timeData.length > 0) {
-                    // Assuming sample rate is roughly derived or fixed.
-                    // For Test 1, sampleRate is in config but not readily available on signal object.
-                    // Estimate sample rate from current view settings:
-                    // sampleRate = TotalSignalSamples / TotalTime
-
-                    const totalTime = controlPanelData.timePerUnit * 10;
-                    const sampleRate = controlPanelData.TotalSignalSamples / totalTime;
-
-                    const fftData = computeFFT(sig.timeData, sampleRate);
-                    // Use the new updateFrequencyData action
-                    updateFrequencyData(sig.id, { data: fftData });
+                    calculateFrequencyData(sig.id);
                 }
             });
         }

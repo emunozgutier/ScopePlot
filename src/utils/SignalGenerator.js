@@ -1,6 +1,6 @@
-import { useSignalStore } from '../../stores/useSignalStore';
-import { useControlPanelStore } from '../../stores/useControlPanelStore';
-import { getSampledData } from './submodule2/ControlPanelTimeSamples';
+import { useSignalStore } from '../stores/useSignalStore';
+import { useControlPanelStore } from '../stores/useControlPanelStore';
+import { getSampledData } from '../module/submodule1/submodule2/ControlPanelTimeSamples';
 
 /**
  * Generates signal data based on configuration.
@@ -59,7 +59,7 @@ export const SampleSignal = (channel) => {
     const controlPanelStore = useControlPanelStore.getState();
 
     // Find the signal for the given channel
-    const signal = signalStore.displayData.signalData.find(s => s.id === channel);
+    const signal = signalStore.signalData.find(s => s.id === channel);
 
     if (signal && signal.timeData) {
         const sampledData = getSampledData(

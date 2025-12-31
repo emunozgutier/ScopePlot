@@ -33,7 +33,7 @@ function App() {
     const { timePerUnit, TotalSignalSamples } = useControlPanelStore.getState().controlPanelData;
     const defaultBuffer = defaultSignal(timePerUnit, TotalSignalSamples);
 
-    const currentSignals = useSignalStore.getState().displayData.signalData;
+    const currentSignals = useSignalStore.getState().signalData;
 
     const newSignals = currentSignals.map(sig => {
       // Initialize timeData
@@ -169,7 +169,7 @@ function App() {
         });
     */
 
-    const currentSignals = useSignalStore.getState().displayData.signalData;
+    const currentSignals = useSignalStore.getState().signalData;
     const newSignals = currentSignals.map(sig => {
       // We only need to update samples if we have data
       if (sig.timeData && sig.timeData.length > 0) {
