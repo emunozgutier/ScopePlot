@@ -21,10 +21,9 @@ const DisplaySignal = ({ displaySignalData, setDisplaySignalData, controlPanelDa
     if (showFrequency && !timeDomain) {
         // --- Frequency Domain ---
         // Access frequencyData directly from signal
-        const chFreqData = displaySignalData.frequencyData;
-        if (!chFreqData || !chFreqData.data) return null;
+        const data = displaySignalData.frequencyData;
+        if (!data) return null;
 
-        const data = chFreqData.data;
         // X-Axis: Frequency
         // Max Frequency = SampleRate / 2
         // SampleRate = TotalSamples / TotalTime
@@ -33,8 +32,9 @@ const DisplaySignal = ({ displaySignalData, setDisplaySignalData, controlPanelDa
         const maxFreq = (TotalSignalSamples / totalTime) / 2;
 
         const mapFreqPoint = (d) => {
-            const x = (d.freq / maxFreq) * 10;
-            const y = 8 - (d.magnitude * 10);
+            // d is [freq, magnitude]
+            const x = (d[0] / maxFreq) * 10;
+            const y = 8 - (d[1] * 10);
             return { x, y };
         };
 

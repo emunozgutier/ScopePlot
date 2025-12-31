@@ -9,7 +9,7 @@ import { computeFFT } from '../utils/fft';
 
 const ControlPanel = () => {
     const { controlPanelData, updateControlPanelData, setTimeDomain } = useControlPanelStore();
-    const { signalList, calculateFrequencyData } = useSignalStore();
+    const { signalList, calculateFrequencyData, calculateDataSample } = useSignalStore();
 
     const handleGlobalUpdate = (newData) => {
         updateControlPanelData(newData);
@@ -35,6 +35,7 @@ const ControlPanel = () => {
             signalList.forEach(sig => {
                 if (sig.timeData && sig.timeData.length > 0) {
                     calculateFrequencyData(sig.id);
+                    calculateDataSample(sig.id, controlPanelData.TotalSignalSamples);
                 }
             });
         }
