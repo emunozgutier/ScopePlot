@@ -3,13 +3,14 @@ import classNames from 'classnames';
 import { performAutoSet } from '../utils/AutoSet';
 import ControlPanelTime from './submodule1/ControlPanelTime';
 import ControlPanelChannel from './submodule1/ControlPanelChannel';
+import CursorControlPanel from './submodule1/CursorControlPanel';
 import { useControlPanelStore } from '../stores/useControlPanelStore';
 import { useSignalStore } from '../stores/useSignalStore';
 import { computeFFT } from '../utils/fft';
 
 const ControlPanel = () => {
     const { controlPanelData, updateControlPanelData, setTimeDomain } = useControlPanelStore();
-    const { signalList, calculateFrequencyData, calculateDataSample } = useSignalStore();
+    const { signalList, calculateFrequencyData, calculateDataSample, cursor, setCursorActive } = useSignalStore();
 
     const handleGlobalUpdate = (newData) => {
         updateControlPanelData(newData);
@@ -66,7 +67,7 @@ const ControlPanel = () => {
 
             {/* Global Controls */}
             <div className="panel-section">
-                <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '10px' }}>
+                <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '10px', flexWrap: 'wrap' }}>
                     <h3 className="panel-header" style={{ marginBottom: 0 }}>Global</h3>
                     <button className="btn-secondary" style={{ padding: '4px 8px', fontSize: '11px' }} onClick={handleAutoSet}>
                         Auto Set
@@ -78,23 +79,40 @@ const ControlPanel = () => {
                     >
                         Freq Domain
                     </button>
+                    <button
+                        className="btn-secondary"
+                        style={{
+                            padding: '4px 8px',
+                            fontSize: '11px',
+                            backgroundColor: cursor.active ? '#4a90e2' : undefined
+                        }}
+                        onClick={() => setCursorActive(!cursor.active)}
+                    >
+                        {cursor.active ? 'Exit Cursor' : 'Cursor Ctrl'}
+                    </button>
                 </div>
             </div>
 
-            <ControlPanelTime
-                controlPanelData={controlPanelData}
-                onUpdate={handleGlobalUpdate}
-                maxSamples={maxSamples}
-                channelStats={channelStats}
-            />
+            {cursor.active ? (
+                <CursorControlPanel />
+            ) : (
+                <>
+                    <ControlPanelTime
+                        controlPanelData={controlPanelData}
+                        onUpdate={handleGlobalUpdate}
+                        maxSamples={maxSamples}
+                        channelStats={channelStats}
+                    />
 
-            {controlPanelData.channels.map(ch => (
-                <ControlPanelChannel
-                    key={ch.id}
-                    channel={ch}
-                    onUpdate={handleChannelUpdate}
-                />
-            ))}
+                    {controlPanelData.channels.map(ch => (
+                        <ControlPanelChannel
+                            key={ch.id}
+                            channel={ch}
+                            onUpdate={handleChannelUpdate}
+                        />
+                    ))}
+                </>
+            )}
         </div>
     );
 };

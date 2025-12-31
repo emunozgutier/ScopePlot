@@ -125,5 +125,45 @@ export const useSignalStore = create((set, get) => ({
             });
             return { signalList: newSignals };
         }
+    }),
+
+    // Cursor State
+    cursor: {
+        active: false,
+        channelId: 0,
+        index: 0
+    },
+
+    setCursorActive: (active) => set((state) => ({
+        cursor: { ...state.cursor, active }
+    })),
+
+    setCursorChannel: (channelId) => set((state) => ({
+        cursor: { ...state.cursor, channelId, index: 0 }
+    })),
+
+    setCursorIndex: (index) => set((state) => {
+        const currentChannel = state.signalList.find(s => s.id === state.cursor.channelId);
+        let maxIndex = 100;
+        if (currentChannel && currentChannel.timeData) {
+            maxIndex = currentChannel.timeData.length - 1;
+        }
+
+        const newIndex = Math.max(0, Math.min(index, maxIndex));
+        return {
+            cursor: { ...state.cursor, index: newIndex }
+        };
+    }),
+
+    moveCursor: (direction) => set((state) => {
+        const currentChannel = state.signalList.find(s => s.id === state.cursor.channelId);
+        if (!currentChannel || !currentChannel.timeData) return state;
+
+        const maxIndex = currentChannel.timeData.length - 1;
+        const newIndex = Math.max(0, Math.min(state.cursor.index + direction, maxIndex));
+
+        return {
+            cursor: { ...state.cursor, index: newIndex }
+        };
     })
 }));

@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 
 import DisplayOffsetTab from './submodule1/DisplayOffsetTab';
 import DisplaySignal from './submodule1/DisplaySignal';
+import DisplayCursor from './submodule1/DisplayCursor';
 
 import { useControlPanelStore } from '../stores/useControlPanelStore';
 import { useSignalStore } from '../stores/useSignalStore';
@@ -68,6 +69,7 @@ const Display = () => {
                             controlPanelData={controlPanelData}
                         />
                     ))}
+                    <DisplayCursor />
                 </svg>
 
                 {/* Overlay */}
