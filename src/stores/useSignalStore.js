@@ -1,8 +1,6 @@
 import { create } from 'zustand';
 import { computeFFT } from '../utils/fft';
-
 import { initialControlPanelData } from './useControlPanelStore';
-import { getSampledData } from '../module/submodule1/submodule2/ControlPanelTimeSamples';
 
 // Helper to generate initial time data locally to avoid circular dependencies
 const generateInitialTimeData = (timePerDiv, totalSamples) => {
@@ -21,15 +19,14 @@ const generateInitialTimeData = (timePerDiv, totalSamples) => {
 const createInitialSignal = (id) => {
     const { timePerUnit, TotalSignalSamples } = initialControlPanelData;
     const initialTimeData = generateInitialTimeData(timePerUnit, TotalSignalSamples);
-    const initialSample = getSampledData(initialTimeData, 'time', initialControlPanelData);
 
     return {
         id,
         defaultZeroData: true, // Flag to indicate initialization state (if needed by logic)
         timeData: initialTimeData,
         frequencyData: null,
-        timeDataSample: initialSample,
-        frequencyDataSample: []
+        timeDataSample: null,
+        frequencyDataSample: null
     };
 };
 

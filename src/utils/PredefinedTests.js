@@ -31,7 +31,7 @@ export const runLoadTest1 = () => {
     const newChannels = [...controlPanelData.channels];
 
     configs.forEach(cfg => {
-        const periods = 100;
+        const periods = 10;
         const samplesPerPeriod = 100;
         const duration = periods / cfg.freq;
         const sampleRate = samplesPerPeriod * cfg.freq;

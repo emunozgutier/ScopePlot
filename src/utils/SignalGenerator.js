@@ -1,6 +1,5 @@
 import { useSignalStore } from '../stores/useSignalStore';
 import { useControlPanelStore } from '../stores/useControlPanelStore';
-import { getSampledData } from '../module/submodule1/submodule2/ControlPanelTimeSamples';
 
 /**
  * Generates signal data based on configuration.

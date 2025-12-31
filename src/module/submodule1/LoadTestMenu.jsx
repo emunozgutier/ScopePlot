@@ -3,10 +3,6 @@ import { useFunctionGenStore } from '../../stores/useFunctionGenStore';
 import { useSignalStore } from '../../stores/useSignalStore';
 import { useControlPanelStore } from '../../stores/useControlPanelStore';
 import { generateSignal } from '../../utils/SignalGenerator';
-import { getSampledData } from './submodule2/ControlPanelTimeSamples';
-
-
-
 
 // We need to re-implement handleSaveGenerator logic here.
 
