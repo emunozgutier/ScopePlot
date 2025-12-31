@@ -26,29 +26,10 @@ const Display = () => {
         updateControlPanelData({ ...controlPanelData, channels: newChannels });
     };
 
-
-    const sidebarRef = React.useRef(null);
-    const [sidebarHeight, setSidebarHeight] = React.useState(0);
-
-    React.useEffect(() => {
-        if (!sidebarRef.current) return;
-
-        const updateHeight = () => {
-            if (sidebarRef.current) {
-                setSidebarHeight(sidebarRef.current.clientHeight);
-            }
-        };
-
-        updateHeight();
-        window.addEventListener('resize', updateHeight);
-        return () => window.removeEventListener('resize', updateHeight);
-    }, []);
-
     return (
         <div style={{ display: 'flex', flex: 1, minWidth: 0, height: '100%', position: 'relative' }}>
             {/* Sidebar for Offset Tabs */}
             <div
-                ref={sidebarRef}
                 style={{
                     width: '50px',
                     height: 'calc(100% - 28px)',
@@ -64,7 +45,6 @@ const Display = () => {
                         key={ch.id}
                         channel={ch}
                         onUpdate={(updates) => handleChannelUpdate(ch.id, updates)}
-                        parentHeight={sidebarHeight}
                     />
                 ))}
             </div>

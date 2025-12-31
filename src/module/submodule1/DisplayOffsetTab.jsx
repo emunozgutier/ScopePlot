@@ -1,8 +1,26 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 
-const DisplayOffsetTab = ({ channel, onUpdate, parentHeight }) => {
+const DisplayOffsetTab = ({ channel, onUpdate }) => {
     const { id, offset, voltsPerUnit, color, visible } = channel;
     const [isDragging, setIsDragging] = useState(false);
+
+    // Internal height tracking to replace parent prop
+    const tabRef = useRef(null);
+    const [containerHeight, setContainerHeight] = useState(0);
+
+    useEffect(() => {
+        const updateHeight = () => {
+            if (tabRef.current && tabRef.current.offsetParent) {
+                setContainerHeight(tabRef.current.offsetParent.clientHeight);
+            }
+        };
+
+        // Run initially and on resize
+        updateHeight();
+        window.addEventListener('resize', updateHeight);
+
+        return () => window.removeEventListener('resize', updateHeight);
+    }, []);
 
     // We need a ref to track the last sent offset to avoid flooding updates
     const lastSentOffsetRef = useRef(offset);
@@ -21,14 +39,15 @@ const DisplayOffsetTab = ({ channel, onUpdate, parentHeight }) => {
         const startOffset = offset;
         lastSentOffsetRef.current = offset; // Sync
 
-        const containerHeight = parentHeight || e.target.offsetParent?.clientHeight || 600; // Fallback
+        // Use the tracked containerHeight, fallback to calculated if 0 (e.g. first render quirk)
+        const currentHeight = containerHeight || e.target.offsetParent?.clientHeight || 600;
 
         const handleMouseMove = (moveEvent) => {
             // 1. Calculate raw movement
             const dy = moveEvent.clientY - startY;
 
             // 2. Convert to Units (0-8 range for full height)
-            const deltaUnits = (dy / containerHeight) * 8;
+            const deltaUnits = (dy / currentHeight) * 8;
 
             // 3. Convert to Volts (Standard Oscilloscope Y-axis direction)
             // Move Mouse DOWN (+dy) -> Move Signal DOWN -> Decrease Offset
@@ -64,7 +83,7 @@ const DisplayOffsetTab = ({ channel, onUpdate, parentHeight }) => {
 
         window.addEventListener('mousemove', handleMouseMove);
         window.addEventListener('mouseup', handleMouseUp);
-    }, [offset, voltsPerUnit, onUpdate, minOffset, maxOffset, parentHeight]);
+    }, [offset, voltsPerUnit, onUpdate, minOffset, maxOffset, containerHeight]);
 
     // If channel not visible, don't render. 
     // MOVED AFTER HOOKS
@@ -123,6 +142,7 @@ const DisplayOffsetTab = ({ channel, onUpdate, parentHeight }) => {
 
     return (
         <div
+            ref={tabRef}
             onMouseDown={handleMouseDown}
             style={{
                 position: 'absolute',
