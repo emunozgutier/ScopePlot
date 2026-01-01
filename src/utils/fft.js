@@ -1,48 +1,60 @@
 import FFT from 'fft.js';
 
-export function computeFFT(voltageTimeData, sampleRate) {
-    if (!voltageTimeData || voltageTimeData.length === 0) return [];
+export function computeFFT(voltageTimeData, sampleRateProvided = null) {
+    if (!voltageTimeData || voltageTimeData.length < 2) return [];
 
-    // 1. Extract voltage samples
-    const data = voltageTimeData.map(d => d[1]);
-    const rawLen = data.length;
+    // 1. Extract Voltage Data
+    const data = voltageTimeData.map(v => v[1]);
+    const n = data.length;
 
-    // 2. Find next power of 2
-    let p = 1;
-    while (p < rawLen) p <<= 1;
-
-    // 3. Initialize FFT
-    const f = new FFT(p);
-    const input = f.createComplexArray();
-    const output = f.createComplexArray();
-
-    // 4. Fill input (Zero-padding is implicit if we stop filling)
-    for (let i = 0; i < rawLen; i++) {
-        input[2 * i] = data[i];     // Real
-        input[2 * i + 1] = 0;       // Imag
+    // 2. Determine Sample Rate (Fs)
+    let Fs = sampleRateProvided;
+    if (!Fs) {
+        const t0 = voltageTimeData[0][0];
+        const t1 = voltageTimeData[1][0];
+        const dt = t1 - t0;
+        Fs = dt > 0 ? 1 / dt : 1000;
     }
 
-    // 5. Transform
-    f.transform(output, input);
+    // 3. Power of 2 for FFT
+    // Find next power of 2
+    const p = Math.ceil(Math.log2(n));
+    const size = Math.pow(2, p);
 
-    // 6. Calculate Magnitude & Frequency
-    // We only need the first p/2 + 1 bins (Nyquist)
-    // However, for typical visualization, p/2 is enough.
+    // 4. Prepare Complex Input
+    const fft = new FFT(size);
+    const input = fft.createComplexArray();
+
+    // Fill with data and zero-pad
+    for (let i = 0; i < n; i++) {
+        input[2 * i] = data[i];       // Real
+        input[2 * i + 1] = 0;         // Imag
+    }
+    for (let i = n; i < size; i++) {
+        input[2 * i] = 0;
+        input[2 * i + 1] = 0;
+    }
+
+    // 5. Execute Transform
+    const output = fft.createComplexArray();
+    fft.transform(output, input);
+
+    // 6. Compute Frequency and Magnitude
+    // Result size is size/2 + 1 usually (Nyquist), but we can just map first half
     const result = [];
-    const numBins = p / 2;
+    const limit = size / 2;
 
-    for (let i = 0; i < numBins; i++) {
+    for (let i = 0; i < limit; i++) {
         const re = output[2 * i];
         const im = output[2 * i + 1];
-        // Magnitude = sqrt(re^2 + im^2) / N  (Normalization)
-        const magnitude = Math.sqrt(re * re + im * im) / p;
+        // Magnitude
+        const mag = Math.sqrt(re * re + im * im) / size; // Normalize by size usually
 
-        const freq = i * sampleRate / p;
+        // Frequency
+        const freq = i * Fs / size;
 
-        result.push({ freq, magnitude });
+        result.push([freq, mag]);
     }
 
-    // you need to pair the fft data with (freq, voltage) for the frequency domain data
-    const frequencyData = result.map(d => [d.freq, d.magnitude]);
-    return frequencyData;
+    return result;
 }
