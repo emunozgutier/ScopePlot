@@ -46,6 +46,7 @@ const Display = () => {
                         key={ch.id}
                         channel={ch}
                         onUpdate={(updates) => handleChannelUpdate(ch.id, updates)}
+                        isFreqDomain={showFrequency}
                     />
                 ))}
             </div>

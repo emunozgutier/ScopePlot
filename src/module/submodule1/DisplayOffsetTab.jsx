@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 
-const DisplayOffsetTab = ({ channel, onUpdate }) => {
+const DisplayOffsetTab = ({ channel, onUpdate, isFreqDomain }) => {
     const { id, offset, voltsPerUnit, color, visible } = channel;
     const [isDragging, setIsDragging] = useState(false);
 
@@ -102,7 +102,8 @@ const DisplayOffsetTab = ({ channel, onUpdate }) => {
         displayOffset = minOffset;
     }
 
-    const zeroPosUnits = 4 - (displayOffset / voltsPerUnit);
+    const baseline = isFreqDomain ? 8 : 4;
+    const zeroPosUnits = baseline - (displayOffset / voltsPerUnit);
     const topPercent = (zeroPosUnits / 8) * 100;
 
     // --- Styles ---

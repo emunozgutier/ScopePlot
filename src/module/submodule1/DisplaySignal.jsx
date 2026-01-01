@@ -34,7 +34,9 @@ const DisplaySignal = ({ displaySignalData, setDisplaySignalData, controlPanelDa
         const mapFreqPoint = (d) => {
             // d is [freq, magnitude]
             const x = (d[0] / maxFreq) * 10;
-            const y = 8 - (d[1] * 10);
+            // Use voltsPerUnit to scale the magnitude, including offset
+            // Assuming d[1] * 10 equates to approx voltage level based on legacy hardcoded value
+            const y = 8 - ((d[1] * 10) + offset) / voltsPerUnit;
             return { x, y };
         };
 
