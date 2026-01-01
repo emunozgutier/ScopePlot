@@ -5,6 +5,7 @@ export function computeFFT(voltageTimeData) {
     // I want result to be [freq, mag] pairs
     const voltageData = voltageTimeData.map(v => v[1]);
     const sampleRate = 1 / (voltageTimeData[1][0] - voltageTimeData[0][0]);
+    const numberOfSamples = voltageTimeData.length;
 
     // we need voltageData to be an array of length 2^N
     // do a simple loop
@@ -16,7 +17,7 @@ export function computeFFT(voltageTimeData) {
     const frequencies = util.fftFreq(phasors, sampleRate);
     const magnitudes = util.fftMag(phasors);
 
-    const result = frequencies.map((freq, index) => [freq, magnitudes[index]]);
+    const result = frequencies.map((freq, index) => [freq, magnitudes[index] / numberOfSamples]);
 
     return result;
 }
