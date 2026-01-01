@@ -76,21 +76,21 @@ const Display = () => {
                 {/* Overlay */}
                 <div style={{ color: 'white' }}>
                     {showFrequency
-                        ? `Freq/Div: ${(controlPanelData.TotalSignalSamples / (controlPanelData.timePerUnit * 10 * 10)).toFixed(1)} Hz`
+                        ? `Freq/Div: ${controlPanelData.freqPerUnit} Hz`
                         : `Time/Div: ${controlPanelData.timePerUnit}s`
                     }
                 </div>
                 <div style={{ color: 'white' }}>
                     {showFrequency
-                        ? `Max Freq: ${(controlPanelData.TotalSignalSamples / (controlPanelData.timePerUnit * 10) / 2).toFixed(1)} Hz`
+                        ? `Nyquist: ${(controlPanelData.TotalSignalSamples / (controlPanelData.timePerUnit * 10) / 2).toFixed(1)} Hz`
                         : `Total Samples: ${controlPanelData.TotalSignalSamples}`
                     }
                 </div>
                 {controlPanelData.channels.map(ch => ch.visible && (
                     <div key={ch.id} style={{ color: ch.color }}>
                         {showFrequency
-                            ? `CH${ch.id + 1}: Mag/Div`
-                            : `CH${ch.id + 1}: ${ch.voltsPerUnit}V/Div`
+                            ? `CH${ch.id + 1}: ${(ch.voltsPerUnitFreqDomain || 1).toPrecision(3)} Mag/Div`
+                            : `CH${ch.id + 1}: ${ch.voltsPerUnitTimeDomain} V/Div`
                         }
                     </div>
                 ))}

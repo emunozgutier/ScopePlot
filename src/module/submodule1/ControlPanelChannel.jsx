@@ -3,16 +3,27 @@ import classNames from 'classnames';
 import Knob from './submodule2/Knob';
 import { formatMetric } from '../../utils/KnobNumber';
 
-const ControlPanelChannel = ({ channel, onUpdate }) => {
+const ControlPanelChannel = ({ channel, onUpdate, isFreq }) => {
     const updateChannel = (updates) => {
         onUpdate(channel.id, updates);
     };
 
+    // Determine correct keys based on domain
+    const voltsKey = isFreq ? 'voltsPerUnitFreqDomain' : 'voltsPerUnitTimeDomain';
+    const offsetKey = isFreq ? 'offsetFreqDomain' : 'offsetTimeDomain';
+
+    const currentVolts = channel[voltsKey];
+    const currentOffset = channel[offsetKey];
+
     // Offset Constraints
     // Step = 0.1 * Volts/Div
-    const offsetStep = channel.voltsPerUnit * 0.1;
+    const offsetStep = currentVolts * 0.1;
     // Min/Max = +/- 4 * Volts/Div (4 divisions)
-    const offsetLimit = channel.voltsPerUnit * 4;
+    const offsetLimit = currentVolts * 4;
+
+    const labelUnit = isFreq ? "Mag/Div" : "Volts/Div";
+    // For offset, strict 4 div limit might be too restrictive if offset is large? 
+    // Standard scope behavior is relative to screen. 4 divs is screen half-height.
 
     return (
         <div className="panel-section" style={{ borderLeft: `3px solid ${channel.color} ` }}>
@@ -48,23 +59,23 @@ const ControlPanelChannel = ({ channel, onUpdate }) => {
 
                     <div className="knobs-row" style={{ display: 'flex', gap: '80px', flex: 1, justifyContent: 'center' }}>
                         <Knob
-                            label="Volts/Div"
-                            value={channel.voltsPerUnit}
-                            onChange={(val) => updateChannel({ voltsPerUnit: val })}
+                            label={labelUnit}
+                            value={currentVolts}
+                            onChange={(val) => updateChannel({ [voltsKey]: val })}
                             stepType="1-2-5"
                             color={channel.color}
-                            format={(v) => formatMetric(v, 'V')}
+                            format={(v) => formatMetric(v, isFreq ? '' : 'V')}
                         />
                         <Knob
                             label="Offset"
-                            value={channel.offset}
-                            onChange={(val) => updateChannel({ offset: val })}
+                            value={currentOffset}
+                            onChange={(val) => updateChannel({ [offsetKey]: val })}
                             min={-offsetLimit}
                             max={offsetLimit}
                             step={offsetStep}
                             stepType="linear"
                             color={channel.color}
-                            format={(v) => formatMetric(v, 'V')}
+                            format={(v) => formatMetric(v, isFreq ? '' : 'V')}
                         />
                     </div>
 

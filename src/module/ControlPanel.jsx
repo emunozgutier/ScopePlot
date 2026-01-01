@@ -107,6 +107,7 @@ const ControlPanel = () => {
                     {controlPanelData.channels.map(ch => (
                         <ControlPanelChannel
                             key={ch.id}
+                            isFreq={!controlPanelData.timeDomain}
                             channel={ch}
                             onUpdate={handleChannelUpdate}
                         />

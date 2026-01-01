@@ -7,8 +7,18 @@ import DisplayPoint from './submodule2/DisplayPoint';
  */
 const DisplaySignal = ({ displaySignalData, setDisplaySignalData, controlPanelData }) => {
     const { id } = displaySignalData;
-    const { voltsPerUnit, offset, color, visible } = controlPanelData.channels.find(ch => ch.id === id) || {};
-    const { timePerUnit, timeOffset, TotalSignalSamples, timeDomain } = controlPanelData;
+    const channelConfig = controlPanelData.channels.find(ch => ch.id === id) || {};
+    const {
+        voltsPerUnitTimeDomain, offsetTimeDomain,
+        voltsPerUnitFreqDomain, offsetFreqDomain,
+        color, visible
+    } = channelConfig;
+
+    const {
+        timePerUnit, timeOffset,
+        freqPerUnit, freqOffset,
+        TotalSignalSamples, timeDomain
+    } = controlPanelData;
 
     const showFrequency = !timeDomain;
 
@@ -24,19 +34,19 @@ const DisplaySignal = ({ displaySignalData, setDisplaySignalData, controlPanelDa
         const data = displaySignalData.frequencyData;
         if (!data) return null;
 
-        // X-Axis: Frequency
-        // Max Frequency = SampleRate / 2
-        // SampleRate = TotalSamples / TotalTime
-        // TotalTime = timePerUnit * 10
-        const totalTime = timePerUnit * 10;
-        const maxFreq = (TotalSignalSamples / totalTime) / 2;
+        const currentVolts = voltsPerUnitFreqDomain || 1;
+        const currentOffset = offsetFreqDomain || 0;
+        const currentFreqScale = freqPerUnit || 1; // Hz/div
+        const currentFreqOffset = freqOffset || 0;
 
         const mapFreqPoint = (d) => {
             // d is [freq, magnitude]
-            const x = (d[0] / maxFreq) * 10;
-            // Use voltsPerUnit to scale the magnitude, including offset
-            // Assuming d[1] * 10 equates to approx voltage level based on legacy hardcoded value
-            const y = 8 - ((d[1] * 10) + offset) / voltsPerUnit;
+            // X = (Freq + Offset) / Scale
+            const x = (d[0] + currentFreqOffset) / currentFreqScale;
+
+            // Y: Mag is plotted as: y = 8 - (mag * 10 + offset) / voltsPerUnit
+            // Assuming d[1] * 10 equates to approx voltage level
+            const y = 8 - ((d[1] * 10) + currentOffset) / currentVolts;
             return { x, y };
         };
 
@@ -54,10 +64,13 @@ const DisplaySignal = ({ displaySignalData, setDisplaySignalData, controlPanelDa
         const voltageTimeData = displaySignalData.timeData || [];
         if (!voltageTimeData || voltageTimeData.length < 2) return null;
 
+        const currentVolts = voltsPerUnitTimeDomain || 1;
+        const currentOffset = offsetTimeDomain || 0;
+
         // Trace uses full resolution
         points = voltageTimeData.map(([t, v]) => {
             const x = ((t + (timeOffset || 0)) / timePerUnit);
-            const y = 4 - (v + offset) / voltsPerUnit;
+            const y = 4 - (v + currentOffset) / currentVolts;
             return { x, y };
         });
 
@@ -66,7 +79,7 @@ const DisplaySignal = ({ displaySignalData, setDisplaySignalData, controlPanelDa
         if (sampledRaw && sampledRaw.length > 0) {
             displayPoints = sampledRaw.map(([t, v]) => {
                 const x = ((t + (timeOffset || 0)) / timePerUnit);
-                const y = 4 - (v + offset) / voltsPerUnit;
+                const y = 4 - (v + currentOffset) / currentVolts;
                 return { x, y };
             });
         } else {

@@ -2,7 +2,11 @@ import React from 'react';
 import Knob from './submodule2/Knob';
 
 const ControlPanelTime = ({ controlPanelData, onUpdate, maxSamples, channelStats }) => {
-    const { timePerUnit, TotalSignalSamples, timeOffset, timeDomain } = controlPanelData;
+    const {
+        timePerUnit, freqPerUnit,
+        timeOffset, freqOffset,
+        TotalSignalSamples, timeDomain
+    } = controlPanelData;
 
     const updateGlobal = (key, value) => {
         onUpdate({
@@ -11,10 +15,29 @@ const ControlPanelTime = ({ controlPanelData, onUpdate, maxSamples, channelStats
         });
     };
 
-    const isTime = timeDomain !== false; // Default to true if undefined, though it should be defined
-    const headerTitle = isTime ? "Time Base" : "Frequency";
+    const isTime = timeDomain !== false;
+
+    // Select values based on domain
+    const unitKey = isTime ? 'timePerUnit' : 'freqPerUnit';
+    const offsetKey = isTime ? 'timeOffset' : 'freqOffset';
+
+    const currentValue = isTime ? timePerUnit : freqPerUnit;
+    const currentOffset = isTime ? (timeOffset || 0) : (freqOffset || 0);
+
+    const headerTitle = isTime ? "Time Base" : "Freq Base";
     const unitScale = isTime ? "s" : "Hz";
     const labelScale = isTime ? "Time/Div" : "Freq/Div";
+
+    // Constraints
+    const minScale = isTime ? 0.001 : 1;
+    const maxScale = isTime ? 100 : 10000000;
+
+    // Offset logic
+    // Time: allowed panning. Freq: allowed panning? usually 0Hz at left.
+    // Let's support it same way.
+    const offsetStep = currentValue * 0.1;
+    const offsetMin = -currentValue * 100;
+    const offsetMax = currentValue * 100;
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -22,20 +45,20 @@ const ControlPanelTime = ({ controlPanelData, onUpdate, maxSamples, channelStats
             <div style={{ display: 'flex', justifyContent: 'space-around' }}>
                 <Knob
                     label={labelScale}
-                    value={timePerUnit}
-                    onChange={(val) => updateGlobal('timePerUnit', val)}
+                    value={currentValue}
+                    onChange={(val) => updateGlobal(unitKey, val)}
                     stepType="1-2-5"
-                    min={0.001}
-                    max={100}
+                    min={minScale}
+                    max={maxScale}
                     unit={unitScale}
                 />
                 <Knob
                     label="Offset"
-                    value={timeOffset || 0}
-                    onChange={(val) => updateGlobal('timeOffset', val)}
-                    step={0.1 * timePerUnit} // Step relative to scale
-                    min={-100}
-                    max={100}
+                    value={currentOffset}
+                    onChange={(val) => updateGlobal(offsetKey, val)}
+                    step={offsetStep}
+                    min={offsetMin}
+                    max={offsetMax}
                     unit={unitScale}
                 />
                 <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>

@@ -1,11 +1,11 @@
 import React, { useRef, useEffect, useState } from 'react';
 
-// Generate 1-2-5 steps from 1uV (1e-6) to 100V
+// Generate 1-2-5 steps from 1p (1e-12) to 1T (1e12)
 const generateSteps = () => {
     const steps = [];
-    for (let exp = -6; exp <= 2; exp++) {
+    for (let exp = -12; exp <= 12; exp++) {
         steps.push(1 * Math.pow(10, exp));
-        if (exp < 2) { // Don't go beyond 100
+        if (exp < 12) {
             steps.push(2 * Math.pow(10, exp));
             steps.push(5 * Math.pow(10, exp));
         }
@@ -103,9 +103,18 @@ const Knob = ({
                 const current = getNearest125(currentVal);
                 const currentIndex = STEPS_1_2_5.indexOf(current);
                 let newIndex = currentIndex + direction;
+
+                // Clamp index to array bounds
                 if (newIndex < 0) newIndex = 0;
                 if (newIndex >= STEPS_1_2_5.length) newIndex = STEPS_1_2_5.length - 1;
-                newValue = STEPS_1_2_5[newIndex];
+
+                // Clamp value to min/max props
+                let nextValue = STEPS_1_2_5[newIndex];
+                if (nextValue > max || nextValue < min) {
+                    newValue = currentVal; // No change
+                } else {
+                    newValue = nextValue;
+                }
             } else if (stepType === 'powerOf2') {
                 const current = getNearestPowerOf2(currentVal);
                 const currentIndex = STEPS_POWER_OF_2.indexOf(current);

@@ -55,11 +55,12 @@ export const performAutoSet = (controlPanelData, signalList) => {
         // significantMaxFreq = N / (20 * timePerUnit)
         // timePerUnit = N / (20 * significantMaxFreq)
 
+        // newTimePerUnit here is frequency
         const N = controlPanelData.TotalSignalSamples;
-        let newTimePerUnit = (significantMaxFreq > 0) ? N / (20 * significantMaxFreq) : controlPanelData.timePerUnit;
+        const newFreqPerUnit = (significantMaxFreq > 0) ? N / (20 * significantMaxFreq) : controlPanelData.freqPerUnit;
 
-        // Snap Time to 1-2-5 (Standard scope behavior)
-        newTimePerUnit = snapTo125(newTimePerUnit);
+        // Snap to 1-2-5
+        const snappedFreqPerUnit = snapTo125(newFreqPerUnit);
 
 
         // 2. Vertical (Magnitude) Logic
@@ -76,22 +77,16 @@ export const performAutoSet = (controlPanelData, signalList) => {
             if (maxMag === 0) return ch;
 
             // We want maxMag to fit in ~6 grid units (Display height is 8).
-            // Mag is plotted as: y = 8 - (mag * 10 + offset) / voltsPerUnit
-            // We want y approx 2 (near top) for the peak.
-            // 2 = 8 - (maxMag * 10) / voltsPerUnit  (assuming offset 0)
-            // 6 = (maxMag * 10) / voltsPerUnit
-            // voltsPerUnit = (maxMag * 10) / 6
-
             let newVoltsPerUnit = (maxMag * 10) / 6;
             newVoltsPerUnit = snapTo125(newVoltsPerUnit);
 
-            return { ...ch, voltsPerUnit: newVoltsPerUnit, offset: 0 };
+            return { ...ch, voltsPerUnitFreqDomain: newVoltsPerUnit, offsetFreqDomain: 0 };
         });
 
         return {
             ...controlPanelData,
-            timePerUnit: newTimePerUnit,
-            timeOffset: 0, // Frequency domain usually starts at 0 Hz
+            freqPerUnit: snappedFreqPerUnit,
+            freqOffset: 0,
             channels: newChannels
         };
     }
@@ -106,11 +101,7 @@ export const performAutoSet = (controlPanelData, signalList) => {
         if (lastPoint && lastPoint[0] > activeMaxTime) activeMaxTime = lastPoint[0];
     });
 
-    // Set Time/Div to fit maxTime in 10 units
-    // If maxTime is very small (e.g. 0), keep default.
     let newTimePerUnit = activeMaxTime > 0 ? activeMaxTime / 10 : controlPanelData.timePerUnit;
-
-    // Snap Time to 1-2-5
     newTimePerUnit = snapTo125(newTimePerUnit);
 
 
@@ -119,13 +110,11 @@ export const performAutoSet = (controlPanelData, signalList) => {
         if (!ch.visible) return ch;
         const sig = signalList.find(s => s.id === ch.id);
 
-        // Safety check for signal data
         if (!sig || !sig.timeData || sig.timeData.length === 0) return ch;
 
         let minV = Infinity;
         let maxV = -Infinity;
 
-        // Analyze raw voltage
         sig.timeData.forEach(([_, v]) => {
             if (v < minV) minV = v;
             if (v > maxV) maxV = v;
@@ -136,23 +125,14 @@ export const performAutoSet = (controlPanelData, signalList) => {
         const range = maxV - minV;
         const center = (maxV + minV) / 2;
 
-        // Grid Height is 8 units. We want signal to cover ~6 units?
-        // Volts/Unit = Range / 6
         let newVoltsPerUnit = range > 0 ? range / 6 : 1;
-
-        // Snap Volts to 1-2-5
         newVoltsPerUnit = snapTo125(newVoltsPerUnit);
 
-        // Offset Logic:
-        // Y = 4 - (v + offset) / voltsPerUnit
-        // We want 'center' to be at Y=4 (Screen Center).
-        // 4 = 4 - (center + offset) / voltsPerUnit -> center + offset = 0 -> offset = -center.
         const newOffset = -center;
 
-        return { ...ch, voltsPerUnit: newVoltsPerUnit, offset: newOffset };
+        return { ...ch, voltsPerUnitTimeDomain: newVoltsPerUnit, offsetTimeDomain: newOffset };
     });
 
-    // Compute min time for offset
     let minTime = Infinity;
     activeSignals.forEach(sig => {
         const firstPoint = sig.timeData[0];

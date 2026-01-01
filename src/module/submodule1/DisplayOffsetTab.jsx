@@ -1,7 +1,15 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 
 const DisplayOffsetTab = ({ channel, onUpdate, isFreqDomain }) => {
-    const { id, offset, voltsPerUnit, color, visible } = channel;
+    const { id, color, visible } = channel;
+
+    // Select correct keys
+    const voltsKey = isFreqDomain ? 'voltsPerUnitFreqDomain' : 'voltsPerUnitTimeDomain';
+    const offsetKey = isFreqDomain ? 'offsetFreqDomain' : 'offsetTimeDomain';
+
+    const voltsPerUnit = channel[voltsKey] || 1;
+    const offset = channel[offsetKey] || 0;
+
     const [isDragging, setIsDragging] = useState(false);
 
     // Internal height tracking to replace parent prop
@@ -25,6 +33,14 @@ const DisplayOffsetTab = ({ channel, onUpdate, isFreqDomain }) => {
     // We need a ref to track the last sent offset to avoid flooding updates
     const lastSentOffsetRef = useRef(offset);
 
+    // Keep ref in sync on render (except when dragging, to avoid jitter? No, usually fine)
+    // Actually, if we are dragging, we don't want external updates to jump us, 
+    // but here we are producing the updates.
+    // Let's just update the ref when not dragging?
+    if (!isDragging) {
+        lastSentOffsetRef.current = offset;
+    }
+
     // --- Calculations ---
     const maxOffset = 4 * voltsPerUnit;
     const minOffset = -4 * voltsPerUnit;
@@ -36,8 +52,7 @@ const DisplayOffsetTab = ({ channel, onUpdate, isFreqDomain }) => {
         setIsDragging(true);
 
         const startY = e.clientY;
-        const startOffset = offset;
-        lastSentOffsetRef.current = offset; // Sync
+        const startOffset = offset; // Capture current prop value
 
         // Use the tracked containerHeight, fallback to calculated if 0 (e.g. first render quirk)
         const currentHeight = containerHeight || e.target.offsetParent?.clientHeight || 600;
@@ -51,11 +66,6 @@ const DisplayOffsetTab = ({ channel, onUpdate, isFreqDomain }) => {
 
             // 3. Convert to Volts (Standard Oscilloscope Y-axis direction)
             // Move Mouse DOWN (+dy) -> Move Signal DOWN -> Decrease Offset
-            // NOTE: In our math `y = 4 - (offset/scale)`. 
-            // If dragging the TAB down, we want the TAB to follow mouse.
-            // If Tab y increases (down), `zeroPosUnits` increases.
-            // `zeroPosUnits` increases -> `4 - (offset/scale)` increases -> `offset` DECREASES.
-            // So +dy = -dOffset. Correct.
             const deltaVolts = -deltaUnits * voltsPerUnit;
 
             let rawNewOffset = startOffset + deltaVolts;
@@ -68,10 +78,9 @@ const DisplayOffsetTab = ({ channel, onUpdate, isFreqDomain }) => {
             snappedOffset = Math.min(Math.max(snappedOffset, minOffset), maxOffset);
 
             // 6. Hysteresis / Throttling: Only update if value CHANGED diff from last update
-            // Floating point comparison epsilon
             if (Math.abs(snappedOffset - lastSentOffsetRef.current) > 1e-9) {
                 lastSentOffsetRef.current = snappedOffset;
-                onUpdate({ offset: snappedOffset });
+                onUpdate({ [offsetKey]: snappedOffset });
             }
         };
 
@@ -83,7 +92,7 @@ const DisplayOffsetTab = ({ channel, onUpdate, isFreqDomain }) => {
 
         window.addEventListener('mousemove', handleMouseMove);
         window.addEventListener('mouseup', handleMouseUp);
-    }, [offset, voltsPerUnit, onUpdate, minOffset, maxOffset, containerHeight]);
+    }, [offset, voltsPerUnit, onUpdate, minOffset, maxOffset, containerHeight, offsetKey]);
 
     // If channel not visible, don't render. 
     // MOVED AFTER HOOKS

@@ -13,7 +13,7 @@ const DisplayCursor = () => {
 
     if (!signal) return null;
 
-    const { channels, timePerUnit, timeOffset, TotalSignalSamples, timeDomain } = controlPanelData;
+    const { channels, timePerUnit, timeOffset, freqPerUnit, freqOffset, TotalSignalSamples, timeDomain } = controlPanelData;
     const channelConfig = channels.find(ch => ch.id === channelId);
 
     // If channel is hidden, do we show cursor? Probably yes, or maybe not. 
@@ -21,8 +21,14 @@ const DisplayCursor = () => {
     // But data might not be visually there. Let's assume we show it if data exists.
     if (!channelConfig) return null;
 
-    const { voltsPerUnit, offset, color } = channelConfig;
     const isFreqDomain = !timeDomain;
+
+    // Select correct units
+    const voltsKey = isFreqDomain ? 'voltsPerUnitFreqDomain' : 'voltsPerUnitTimeDomain';
+    const offsetKey = isFreqDomain ? 'offsetFreqDomain' : 'offsetTimeDomain';
+
+    const voltsPerUnit = channelConfig[voltsKey] || 1;
+    const offset = channelConfig[offsetKey] || 0;
 
     let x = 0;
     let y = 0;
@@ -33,11 +39,13 @@ const DisplayCursor = () => {
         const data = signal.frequencyData;
         if (data && index < data.length) {
             const point = data[index]; // [freq, mag]
-            const totalTime = timePerUnit * 10;
-            const maxFreq = (TotalSignalSamples / totalTime) / 2;
+            const currentFreqScale = freqPerUnit || 1;
+            const currentFreqOffset = freqOffset || 0;
 
-            x = (point[0] / maxFreq) * 10;
-            y = 8 - (point[1] * 10);
+            // X = (Freq + Offset) / Scale
+            x = (point[0] + currentFreqOffset) / currentFreqScale;
+            // Y = 8 - (mag * 10 + offset) / voltsPerUnit
+            y = 8 - ((point[1] * 10) + offset) / voltsPerUnit;
             isValid = true;
         }
     } else {
