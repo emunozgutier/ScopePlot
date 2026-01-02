@@ -75,7 +75,7 @@ const ControlPanelTime = ({ controlPanelData, onUpdate, maxSamples, channelStats
                         />
                         {maxSamples && (
                             <div style={{ fontSize: '10px', color: '#aaa', marginTop: '2px' }}>
-                                Current Max: {maxSamples}
+                                Signal Length: {maxSamples}
                             </div>
                         )}
                     </div>

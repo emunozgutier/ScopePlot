@@ -15,6 +15,9 @@ const DisplayCursor = () => {
 
     const { channels, timePerUnit, timeOffset, freqPerUnit, freqOffset, TotalSignalSamples, timeDomain } = controlPanelData;
     const channelConfig = channels.find(ch => ch.id === channelId);
+    if (!channelConfig) return null;
+
+    const { color } = channelConfig;
 
     // If channel is hidden, do we show cursor? Probably yes, or maybe not. 
     // Usually cursors are for measuring, so even if hidden, maybe? 
@@ -71,28 +74,24 @@ const DisplayCursor = () => {
 
     return (
         <g className="cursor-group">
-            {/* Vertical Line of the Cross */}
+            {/* Vertical Line */}
             <line
                 x1={x}
-                y1={y - crossSize}
+                y1={0}
                 x2={x}
-                y2={y + crossSize}
-                stroke={color} // Use channel color for cursor
-                strokeWidth="0.05"
+                y2={8}
+                stroke="white"
+                strokeWidth="0.02" // Skinny line
             />
-            {/* Horizontal Line of the Cross */}
+            {/* Horizontal Line */}
             <line
-                x1={x - crossSize}
+                x1={0}
                 y1={y}
-                x2={x + crossSize}
+                x2={10}
                 y2={y}
-                stroke={color}
-                strokeWidth="0.05"
+                stroke="white"
+                strokeWidth="0.02" // Skinny line
             />
-            {/* Optional: Full screen crosshair lines with lower opacity? 
-                User said "shows ontop of the selected dot", implying local cross.
-                I'll stick to local cross.
-            */}
         </g>
     );
 };
