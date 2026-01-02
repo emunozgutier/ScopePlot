@@ -13,12 +13,19 @@ const ControlPanel = () => {
     const { signalList, calculateFrequencyData, calculateDataSample, cursor, setCursorActive } = useSignalStore();
 
     const handleGlobalUpdate = (newData) => {
+        if (newData.TotalSignalSamples !== controlPanelData.TotalSignalSamples) {
+            signalList.forEach(sig => {
+                if (sig.timeData && sig.timeData.length > 0) {
+                    calculateDataSample(sig.id, newData.TotalSignalSamples);
+                }
+            });
+        }
         updateControlPanelData(newData);
     };
 
     const handleAutoSet = () => {
         const newData = performAutoSet(controlPanelData, signalList);
-        handleGlobalUpdate(newData);
+        handleGlobalUpdate(newData); // Reuse logic to ensure samples update if AutoSet changes them
     };
 
     const handleChannelUpdate = (chId, newData) => {

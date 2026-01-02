@@ -182,17 +182,33 @@ const Knob = ({
 
     const handleInputBlur = () => {
         setIsEditing(false);
-        // We can use the text input parsing, which seems to imply free text...
-        // But let's assume we want to support the same metric parsing if possible.
-        // Actually the local copy of parseValue was removed, so we should import parseMetric too?
-        // Wait, I removed the whole top section which included parseValue.
-        // I need to import parseMetric as well.
-        // And use it here.
-        // Let's use simple parseFloat if no metric parser imported, or better, 
-        // Import parseMetric in the top import statement.
+        const newVal = parseValue(inputValue);
 
-        // This is a correction to the previous edit essentially.
-        // See 'parseMetric' usage below.
+        // Validation/Snapping logic similar to wheel
+        let finalVal = newVal;
+
+        if (stepType === '1-2-5') {
+            finalVal = getNearest125(newVal);
+            // Clamp to allowed range
+            if (finalVal < min) finalVal = min; // Or find nearest 1-2-5 >= min
+            // Let's just use the nearest found relative to min/max
+            if (finalVal > max) finalVal = max; // Clamp
+        } else if (stepType === 'powerOf2') {
+            finalVal = getNearestPowerOf2(newVal);
+            // Clamp
+            // PowerOf2 steps are fixed, but we should respect min/max if possible
+            // Current logic matches steps mainly.
+        } else {
+            // Linear
+            finalVal = Math.min(Math.max(newVal, min), max);
+        }
+
+        if (!isNaN(finalVal) && finalVal !== value) {
+            onChange(finalVal);
+        } else {
+            // Reset if invalid or same
+            setInputValue(format ? format(value) : value.toString());
+        }
     };
 
     const handleKeyDown = (e) => {
@@ -200,6 +216,95 @@ const Knob = ({
             e.target.blur();
         }
     };
+
+    // Dragging Logic
+    useEffect(() => {
+        const el = knobRef.current;
+        if (!el) return;
+
+        let startY = 0;
+        let startVal = 0;
+        let accumulatedDelta = 0;
+
+        const handleMouseMove = (e) => {
+            const currentY = e.clientY;
+            let deltaY = startY - currentY; // Up is positive
+
+            // Sensitivity
+            const PIXELS_PER_STEP = 20;
+
+            if (stepType === 'linear') {
+                // Continuous mapping
+                // Map 200px to full range? Or 1 step per 10px?
+                let change = (deltaY / PIXELS_PER_STEP) * step;
+                let newVal = startVal + change;
+                newVal = Math.min(Math.max(newVal, min), max);
+                onChangeRef.current(parseFloat(newVal.toFixed(6)));
+            } else {
+                // Discrete mapping
+                accumulatedDelta = deltaY;
+                const stepsToTake = Math.round(accumulatedDelta / PIXELS_PER_STEP);
+
+                if (stepsToTake !== 0) {
+                    // Determine direction
+                    const direction = stepsToTake > 0 ? 1 : -1;
+                    const absSteps = Math.abs(stepsToTake);
+
+                    let current = startVal;
+                    // We need to apply logic relative to startVal
+                    // Actually easier: calculate 'newIndex' based on start index + stepsToTake
+
+                    if (stepType === '1-2-5') {
+                        const snappedStart = getNearest125(startVal);
+                        const startIdx = STEPS_1_2_5.indexOf(snappedStart);
+                        let newIdx = startIdx + stepsToTake;
+                        if (newIdx < 0) newIdx = 0;
+                        if (newIdx >= STEPS_1_2_5.length) newIdx = STEPS_1_2_5.length - 1;
+
+                        let nextVal = STEPS_1_2_5[newIdx];
+                        if (nextVal >= min && nextVal <= max) {
+                            onChangeRef.current(nextVal);
+                        }
+                    } else if (stepType === 'powerOf2') {
+                        const snappedStart = getNearestPowerOf2(startVal);
+                        const startIdx = STEPS_POWER_OF_2.indexOf(snappedStart);
+                        let newIdx = startIdx + stepsToTake;
+                        if (newIdx < 0) newIdx = 0;
+                        if (newIdx >= STEPS_POWER_OF_2.length) newIdx = STEPS_POWER_OF_2.length - 1;
+                        onChangeRef.current(STEPS_POWER_OF_2[newIdx]);
+                    }
+                }
+            }
+        };
+
+        const handleMouseUp = () => {
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', handleMouseUp);
+            document.body.style.cursor = '';
+        };
+
+        const handleMouseDown = (e) => {
+            // Only left click
+            if (e.button !== 0) return;
+            e.preventDefault();
+            startY = e.clientY;
+            startVal = valueRef.current;
+            accumulatedDelta = 0;
+
+            document.addEventListener('mousemove', handleMouseMove);
+            document.addEventListener('mouseup', handleMouseUp);
+            document.body.style.cursor = 'ns-resize';
+        };
+
+        el.addEventListener('mousedown', handleMouseDown);
+        return () => {
+            el.removeEventListener('mousedown', handleMouseDown);
+            // Cleanup in case component unmounts while dragging
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', handleMouseUp);
+            document.body.style.cursor = '';
+        }
+    }, [stepType, min, max, step]);
 
     return (
         <div className="knob-container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '0 5px' }}>

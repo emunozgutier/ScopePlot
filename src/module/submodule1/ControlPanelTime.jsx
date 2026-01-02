@@ -67,17 +67,15 @@ const ControlPanelTime = ({ controlPanelData, onUpdate, maxSamples, channelStats
                             label="Samples"
                             value={TotalSignalSamples}
                             onChange={(val) => {
-                                // Ensure we don't exceed maxSamples if provided
-                                const clamped = maxSamples ? Math.min(val, maxSamples) : val;
-                                updateGlobal('TotalSignalSamples', clamped);
+                                updateGlobal('TotalSignalSamples', val);
                             }}
                             stepType="powerOf2"
                             min={16}
-                            max={maxSamples || 8192}
+                            max={131072}
                         />
                         {maxSamples && (
                             <div style={{ fontSize: '10px', color: '#aaa', marginTop: '2px' }}>
-                                Max: {maxSamples}
+                                Current Max: {maxSamples}
                             </div>
                         )}
                     </div>
