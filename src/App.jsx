@@ -5,6 +5,7 @@ import MenuBar from './module/MenuBar';
 import Display from './module/Display';
 import ControlPanel from './module/ControlPanel';
 import LoadTestMenu from './module/submodule1/LoadTestMenu';
+import LoadCsvData from './module/submodule1/LoadCsvData';
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
         <ControlPanel />
       </div>
       <LoadTestMenu />
+      <LoadCsvData />
     </div>
   );
 }

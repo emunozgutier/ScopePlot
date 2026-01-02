@@ -2,11 +2,13 @@ import React from 'react';
 import classNames from 'classnames';
 import { useMenuBarStore } from '../stores/useMenuBarStore';
 import { useFunctionGenStore } from '../stores/useFunctionGenStore';
+
 import { runLoadTest1, runLoadTest2 } from '../utils/PredefinedTests';
 
 const MenuBarContent = () => {
-    const { menuBarData, setMenuBarData } = useMenuBarStore();
+    const { menuBarData, setMenuBarData, openCsvModal } = useMenuBarStore();
     const { openModal } = useFunctionGenStore();
+
 
     // Local state for submenu
     const [activeSubMenu, setActiveSubMenu] = React.useState(null);
@@ -53,6 +55,12 @@ const MenuBarContent = () => {
                                 zIndex: 100, width: '150px'
                             }}
                         >
+                            <div
+                                className="menu-item"
+                                onClick={() => { openCsvModal(); closeAllMenus(); }}
+                            >
+                                Load CSV...
+                            </div>
                             <div
                                 className="menu-item"
                                 style={{ position: 'relative', display: 'flex', justifyContent: 'space-between' }}
