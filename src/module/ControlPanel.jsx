@@ -8,10 +8,11 @@ import ControlLabels from './submodule1/ControlLabels';
 import { useControlPanelStore } from '../stores/useControlPanelStore';
 import { useSignalStore } from '../stores/useSignalStore';
 import { computeFFT } from '../utils/fft';
+import { findPeaks } from '../utils/FindPeak';
 
 const ControlPanel = () => {
     const { controlPanelData, updateControlPanelData, setTimeDomain } = useControlPanelStore();
-    const { signalList, calculateFrequencyData, calculateDataSample, cursor, setCursorActive } = useSignalStore();
+    const { signalList, calculateFrequencyData, calculateDataSample, cursor, setCursorActive, addLabel } = useSignalStore();
 
     const handleGlobalUpdate = (newData) => {
         if (newData.TotalSignalSamples !== controlPanelData.TotalSignalSamples) {
@@ -61,6 +62,21 @@ const ControlPanel = () => {
 
             // Update Global Store with new settings (Scale, Offset, and the Domain switch)
             updateControlPanelData(autoSetData);
+
+            // Find peaks and add labels
+            updatedSignalList.forEach(sig => {
+                if (sig.frequencyData && sig.frequencyData.length > 0) {
+                    const peaks = findPeaks(sig.frequencyData, 3);
+                    peaks.forEach(peak => {
+                        addLabel({
+                            channelId: sig.id,
+                            x: peak.x,
+                            y: peak.y,
+                            isFreq: true
+                        });
+                    });
+                }
+            });
 
         } else {
             setTimeDomain(newTimeDomain);
