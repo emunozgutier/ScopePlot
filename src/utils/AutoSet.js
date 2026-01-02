@@ -10,15 +10,11 @@ export const performAutoSet = (controlPanelData, signalList) => {
     if (activeSignals.length === 0) return controlPanelData;
 
     // --- Frequency Domain AutoSet ---
+    console.log("AutoSet Started. Domain:", controlPanelData.timeDomain ? "Time" : "Frequency");
+
+    // --- Frequency Domain AutoSet ---
     if (!controlPanelData.timeDomain) {
-        // 1. Horizontal (Frequency Span) Logic
-        // We want to find the maximum frequency with significant magnitude.
-        // However, simpler approach: Find the max frequency in the dataset (Nyquist of current capture)
-        // OR better: Find the max freq with a peak?
-        // Let's stick to the plan: "Identify the highest frequency with significant magnitude"
-        // But for robust "AutoSet", often just fitting the available bandwidth is enough if we assume user wants to see what's captured.
-        // But if the capture is huge (high sample rate), showing it all might bunch up the useful signal.
-        // Let's find the max frequency where magnitude is > 1% of the global max magnitude.
+        console.log("Processing Frequency Domain AutoSet...");
 
         let globalMaxMag = 0;
         activeSignals.forEach(sig => {
@@ -26,59 +22,55 @@ export const performAutoSet = (controlPanelData, signalList) => {
                 if (d[1] > globalMaxMag) globalMaxMag = d[1];
             });
         });
+        console.log("Global Max Magnitude:", globalMaxMag);
 
         let significantMaxFreq = 0;
         activeSignals.forEach(sig => {
             sig.frequencyData.forEach(d => {
-                // Check if magnitude is significant (e.g. > 5% of max)
-                // If signal is pure noise this might be erratic, but better than showing empty space.
                 if (d[1] > globalMaxMag * 0.05) {
                     if (d[0] > significantMaxFreq) significantMaxFreq = d[0];
                 }
             });
         });
+        console.log("Significant Max Freq (>5% Mag):", significantMaxFreq);
 
-        // If no significant freq found (silence), use the max available freq
         if (significantMaxFreq === 0) {
             activeSignals.forEach(sig => {
                 const lastPoint = sig.frequencyData[sig.frequencyData.length - 1];
                 if (lastPoint && lastPoint[0] > significantMaxFreq) significantMaxFreq = lastPoint[0];
             });
+            console.log("No significant signal found. Using Max Available Freq:", significantMaxFreq);
         }
+        // We want 'significantMaxFreq' to be at roughly the 9th division (near right edge)
+        // Display Range = freqPerUnit * 10
+        // freqPerUnit = significantMaxFreq / 9
 
-        // We want 'significantMaxFreq' to be at roughly the 10th division (right edge) or little less (90%).
-        // MaxFreqDisplayed = TotalSamples / (timePerUnit * 10) / 2  <-- Wait, this formula is derived from sampling rate.
-        // Re-eval formula:
-        // SampleRate = N / T_total = N / (timePerUnit * 10)
-        // MaxFreq = SampleRate / 2 = N / (20 * timePerUnit)
-        // We want MaxFreq >= significantMaxFreq
-        // significantMaxFreq = N / (20 * timePerUnit)
-        // timePerUnit = N / (20 * significantMaxFreq)
-
-        // newTimePerUnit here is frequency
-        const N = controlPanelData.TotalSignalSamples;
-        const newFreqPerUnit = (significantMaxFreq > 0) ? N / (20 * significantMaxFreq) : controlPanelData.freqPerUnit;
-
-        // Snap to 1-2-5
+        const newFreqPerUnit = (significantMaxFreq > 0) ? significantMaxFreq / 9 : controlPanelData.freqPerUnit;
         const snappedFreqPerUnit = snapTo125(newFreqPerUnit);
 
+        console.log(`Calculated Freq/Div: ${newFreqPerUnit} -> Snapped: ${snappedFreqPerUnit}`);
 
-        // 2. Vertical (Magnitude) Logic
+        // 2. Vertical Logic
         const newChannels = controlPanelData.channels.map(ch => {
             if (!ch.visible) return ch;
             const sig = signalList.find(s => s.id === ch.id);
-            if (!sig || !sig.frequencyData || sig.frequencyData.length === 0) return ch;
+            if (!sig || !sig.frequencyData || sig.frequencyData.length === 0) {
+                console.log(`CH${ch.id + 1}: No Freq Data`);
+                return ch;
+            }
 
             let maxMag = 0;
             sig.frequencyData.forEach(d => {
                 if (d[1] > maxMag) maxMag = d[1];
             });
+            console.log(`CH${ch.id + 1} Max Mag: ${maxMag}`);
 
             if (maxMag === 0) return ch;
 
-            // We want maxMag to fit in ~6 grid units (Display height is 8).
             let newVoltsPerUnit = (maxMag * 10) / 6;
             newVoltsPerUnit = snapTo125(newVoltsPerUnit);
+
+            console.log(`CH${ch.id + 1} New Mag/Div: ${newVoltsPerUnit}`);
 
             return { ...ch, voltsPerUnitFreqDomain: newVoltsPerUnit, offsetFreqDomain: 0 };
         });
@@ -92,6 +84,7 @@ export const performAutoSet = (controlPanelData, signalList) => {
     }
 
     // --- Time Domain AutoSet (Existing Logic) ---
+    console.log("Processing Time Domain AutoSet...");
 
     // 1. Time Logic
     let activeMaxTime = 0;
@@ -100,17 +93,21 @@ export const performAutoSet = (controlPanelData, signalList) => {
         const lastPoint = vData[vData.length - 1];
         if (lastPoint && lastPoint[0] > activeMaxTime) activeMaxTime = lastPoint[0];
     });
+    console.log("Global Max Time:", activeMaxTime);
 
     let newTimePerUnit = activeMaxTime > 0 ? activeMaxTime / 10 : controlPanelData.timePerUnit;
     newTimePerUnit = snapTo125(newTimePerUnit);
-
+    console.log(`Calculated Time/Div: ${activeMaxTime / 10} -> Snapped: ${newTimePerUnit}`);
 
     // 2. Voltage Logic
     const newChannels = controlPanelData.channels.map(ch => {
         if (!ch.visible) return ch;
         const sig = signalList.find(s => s.id === ch.id);
 
-        if (!sig || !sig.timeData || sig.timeData.length === 0) return ch;
+        if (!sig || !sig.timeData || sig.timeData.length === 0) {
+            console.log(`CH${ch.id + 1}: No Time Data`);
+            return ch;
+        }
 
         let minV = Infinity;
         let maxV = -Infinity;
@@ -119,6 +116,8 @@ export const performAutoSet = (controlPanelData, signalList) => {
             if (v < minV) minV = v;
             if (v > maxV) maxV = v;
         });
+
+        console.log(`CH${ch.id + 1} Range: [${minV.toFixed(3)} V, ${maxV.toFixed(3)} V]`);
 
         if (minV === Infinity) return ch;
 
@@ -130,6 +129,8 @@ export const performAutoSet = (controlPanelData, signalList) => {
 
         const newOffset = -center;
 
+        console.log(`CH${ch.id + 1} New Volts/Div: ${newVoltsPerUnit}, Offset: ${newOffset.toFixed(3)}`);
+
         return { ...ch, voltsPerUnitTimeDomain: newVoltsPerUnit, offsetTimeDomain: newOffset };
     });
 
@@ -139,6 +140,7 @@ export const performAutoSet = (controlPanelData, signalList) => {
         if (firstPoint && firstPoint[0] < minTime) minTime = firstPoint[0];
     });
     const newTimeOffset = minTime !== Infinity ? -minTime : 0;
+    console.log("New Time Offset:", newTimeOffset);
 
     return {
         ...controlPanelData,

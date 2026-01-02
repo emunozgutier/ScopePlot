@@ -39,9 +39,24 @@ const ControlPanel = () => {
                     calculateDataSample(sig.id, controlPanelData.TotalSignalSamples);
                 }
             });
-        }
 
-        setTimeDomain(newTimeDomain);
+            // Auto-Run AutoSet for Frequency Domain
+            // We need updated signal list because calculateFrequencyData updates the store, 
+            // but our local 'signalList' const is stale until re-render.
+            const updatedSignalList = useSignalStore.getState().signalList;
+
+            // Prepare temporary data state pretending we are already in Freq Domain
+            const tempControlPanelData = { ...controlPanelData, timeDomain: false };
+
+            // Perform AutoSet
+            const autoSetData = performAutoSet(tempControlPanelData, updatedSignalList);
+
+            // Update Global Store with new settings (Scale, Offset, and the Domain switch)
+            updateControlPanelData(autoSetData);
+
+        } else {
+            setTimeDomain(newTimeDomain);
+        }
     };
 
     // Calculate Max Samples based on signal data
