@@ -42,13 +42,15 @@ const signalSampler = (signalData, sampleCount) => {
         return signalData;
     }
 
-    // Implement signal sampling logic here
-    const sampledData = signalData.map((point, index) => {
-        if (index % sampleCount === 0) {
-            return point;
+    const step = signalData.length / sampleCount;
+    const sampledData = [];
+
+    for (let i = 0; i < sampleCount; i++) {
+        const index = Math.floor(i * step);
+        if (index < signalData.length) {
+            sampledData.push(signalData[index]);
         }
-        return null;
-    }).filter(point => point !== null);
+    }
     return sampledData;
 };
 
