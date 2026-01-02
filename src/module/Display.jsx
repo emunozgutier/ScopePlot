@@ -3,6 +3,7 @@ import React, { useEffect, useRef } from 'react';
 import DisplayOffsetTab from './submodule1/DisplayOffsetTab';
 import DisplaySignal from './submodule1/DisplaySignal';
 import DisplayCursor from './submodule1/DisplayCursor';
+import DisplayLabel from './submodule1/DisplayLabel';
 
 import { useControlPanelStore } from '../stores/useControlPanelStore';
 import { useSignalStore } from '../stores/useSignalStore';
@@ -11,7 +12,7 @@ import { defaultSignal } from '../utils/SignalGenerator';
 
 const Display = () => {
     const { controlPanelData, updateControlPanelData } = useControlPanelStore();
-    const { signalList, updateTimeData, cursor, setCursorIndex } = useSignalStore();
+    const { signalList, updateTimeData, cursor, setCursorIndex, labels, labelToolActive, addLabel } = useSignalStore();
 
     const sidebarWidth = 50;
 
@@ -32,14 +33,87 @@ const Display = () => {
     };
 
     const handlePointerDown = (e) => {
+        const svg = svgRef.current;
+        if (!svg) return;
+
+        if (labelToolActive) {
+            const rect = svg.getBoundingClientRect();
+            const xPixels = e.clientX - rect.left;
+            const yPixels = e.clientY - rect.top;
+            const svgX = (xPixels / rect.width) * widthUnits;
+            const svgY = (yPixels / rect.height) * heightUnits;
+
+            // Find closest signal point
+            let closestDist = Infinity;
+            let closestPoint = null;
+            let closestChannelId = null;
+
+            controlPanelData.channels.forEach(ch => {
+                if (!ch.visible) return;
+                const sig = signalList.find(s => s.id === ch.id);
+                if (!sig) return;
+
+                const data = showFrequency ? sig.frequencyData : sig.timeData;
+                if (!data) return;
+
+                const scale = showFrequency ? (controlPanelData.freqPerUnit || 1) : (controlPanelData.timePerUnit || 1);
+                const offset = showFrequency ? (controlPanelData.freqOffset || 0) : (controlPanelData.timeOffset || 0);
+                const targetVal = svgX * scale - offset;
+
+                // Find closest index by X
+                let idx = 0;
+                let minXDist = Infinity;
+                for (let i = 0; i < data.length; i++) {
+                    const d = Math.abs(data[i][0] - targetVal);
+                    if (d < minXDist) { minXDist = d; idx = i; }
+                }
+
+                // Check Y distance in screen units
+                const point = data[idx];
+                // Y Calc
+                const voltsPerUnit = showFrequency ? (ch.voltsPerUnitFreqDomain || 1) : ch.voltsPerUnitTimeDomain;
+                const chOffset = showFrequency ? (ch.offsetFreqDomain || 0) : ch.offsetTimeDomain; // Note: simplified logic, usually ch has own offset
+
+                // My DisplayCursor logic for Y:
+                // Time: y = 4 - (val + offset)/scale
+                // Freq: y = 8 - (val*10 + offset)/scale
+
+                let pointSvgY;
+                if (showFrequency) {
+                    pointSvgY = 8 - ((point[1] * 10) + (ch.offsetFreqDomain || 0)) / (ch.voltsPerUnitFreqDomain || 1);
+                } else {
+                    pointSvgY = 4 - (point[1] + (ch.offsetTimeDomain || 0)) / ch.voltsPerUnitTimeDomain;
+                }
+
+                const dist = Math.abs(svgY - pointSvgY);
+                // Also factor in X distance? Ideally just pick this point if it's "close enough" to mouse Y?
+                // Or just pick the channel that is strictly closest in Y at this X.
+                if (dist < closestDist) {
+                    closestDist = dist;
+                    closestPoint = point;
+                    closestChannelId = ch.id;
+                }
+            });
+
+            if (closestPoint) {
+                addLabel({
+                    id: Date.now(),
+                    x: closestPoint[0],
+                    y: closestPoint[1],
+                    channelId: closestChannelId,
+                    isFreq: showFrequency
+                });
+            }
+            return;
+        }
+
         if (!cursor.active) return;
 
         // Simple hit testing or just allow grabbing anywhere for better UX?
         // User asked for "cursor cross dragable".
         // Let's allow dragging if we are "close enough" to the cursor X line.
 
-        const svg = svgRef.current;
-        if (!svg) return;
+
 
         const rect = svg.getBoundingClientRect();
         const x = e.clientX - rect.left;
@@ -241,6 +315,9 @@ const Display = () => {
                         ))}
                         <DisplayCursor />
                     </svg>
+                    {labels.map(label => (
+                        <DisplayLabel key={label.id} label={label} />
+                    ))}
 
                     {/* Transparent overlay for interaction to ensure we catch events on top of everything */}
                     <div

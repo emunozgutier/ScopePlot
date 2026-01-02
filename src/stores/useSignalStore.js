@@ -167,5 +167,23 @@ export const useSignalStore = create((set, get) => ({
         return {
             cursor: { ...state.cursor, index: newIndex }
         };
-    })
+    }),
+
+    // Label Tool State
+    labels: [],
+    labelToolActive: false,
+
+    setLabelToolActive: (active) => set({ labelToolActive: active }),
+
+    addLabel: (label) => set((state) => ({
+        labels: [...state.labels, { ...label, id: Date.now() + Math.random(), position: 'top' }]
+    })),
+
+    updateLabel: (id, updates) => set((state) => ({
+        labels: state.labels.map(l => l.id === id ? { ...l, ...updates } : l)
+    })),
+
+    removeLabel: (id) => set((state) => ({
+        labels: state.labels.filter(l => l.id !== id)
+    }))
 }));
