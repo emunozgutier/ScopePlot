@@ -13,6 +13,8 @@ const Display = () => {
     const { controlPanelData, updateControlPanelData } = useControlPanelStore();
     const { signalList, updateTimeData, cursor, setCursorIndex } = useSignalStore();
 
+    const sidebarWidth = 50;
+
     // Simulation Time Ref
     const timeRef = useRef(0);
     const svgRef = useRef(null);
@@ -156,91 +158,139 @@ const Display = () => {
         setCursorIndex(newIndex);
     };
 
+    // Helper to format labels
+    const formatLabel = (val) => {
+        if (val === 0) return "0";
+        if (Math.abs(val) < 0.01) return val.toExponential(1);
+        if (Math.abs(val) >= 1000) return val.toExponential(1);
+        return val.toFixed(2);
+    };
+
+    const renderXAxisLabels = () => {
+        const labels = [];
+        const scale = showFrequency ? (controlPanelData.freqPerUnit || 1) : (controlPanelData.timePerUnit || 1);
+        const offset = showFrequency ? (controlPanelData.freqOffset || 0) : (controlPanelData.timeOffset || 0);
+
+        for (let i = 0; i <= widthUnits; i++) {
+            // Calculate value at this grid line
+            // svgX = i (0 to 10)
+            // val = svgX * scale - offset
+            const val = i * scale - offset;
+            labels.push(
+                <div key={i} style={{
+                    position: 'absolute',
+                    left: `${(i / widthUnits) * 100}%`,
+                    transform: 'translateX(-50%)',
+                    bottom: '2px',
+                    fontSize: '10px',
+                    color: '#aaa',
+                    whiteSpace: 'nowrap'
+                }}>
+                    {formatLabel(val)} {showFrequency && i === widthUnits ? 'Hz' : (i === widthUnits ? 's' : '')}
+                </div>
+            );
+        }
+        return labels;
+    };
+
     return (
-        <div style={{ display: 'flex', flex: 1, minWidth: 0, height: '100%', position: 'relative' }}>
-            {/* Sidebar for Offset Tabs */}
-            <div
-                style={{
-                    width: '50px',
-                    height: 'calc(100% - 28px)',
-                    marginTop: '14px',
-                    position: 'relative',
-                    backgroundColor: '#111',
-                    borderRight: '1px solid #333',
-                    overflow: 'hidden'
-                }}
-            >
-                {controlPanelData.channels.map(ch => (
-                    <DisplayOffsetTab
-                        key={ch.id}
-                        channel={ch}
-                        onUpdate={(updates) => handleChannelUpdate(ch.id, updates)}
-                        isFreqDomain={showFrequency}
-                    />
-                ))}
-            </div>
-
-            {/* Main Display Area */}
-            <div className="scope-display" style={{ flex: 1, position: 'relative' }}>
-                <div className="grid-background" />
-
-
-                <svg
-                    ref={svgRef}
-                    viewBox={`0 0 ${widthUnits} ${heightUnits}`}
-                    className="signal-layer"
-                    preserveAspectRatio="none"
-                    style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0 }}
-                >
-                    {signalList.map((sig) => (
-                        <DisplaySignal
-                            key={sig.id}
-                            displaySignalData={sig}
-                            setDisplaySignalData={(newData) => updateTimeData(sig.id, newData.timeData)}
-                            controlPanelData={controlPanelData}
-                        />
-                    ))}
-                    <DisplayCursor />
-                </svg>
-
-                {/* Transparent overlay for interaction to ensure we catch events on top of everything */}
+        <div style={{ display: 'flex', flexDirection: 'column', height: '100%', flex: 1, minWidth: 0 }}>
+            {/* Top Area: Sidebar + Plot */}
+            <div style={{ display: 'flex', flex: 1, minHeight: 0, position: 'relative' }}>
+                {/* Sidebar for Offset Tabs */}
                 <div
                     style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        width: '100%',
-                        height: '100%',
-                        cursor: cursor.active ? 'ew-resize' : 'default',
-                        touchAction: 'none' // Important for pointer events
+                        width: '50px',
+                        height: 'calc(100% - 28px)',
+                        marginTop: '14px',
+                        position: 'relative',
+                        backgroundColor: '#111',
+                        borderRight: '1px solid #333',
+                        overflow: 'hidden'
                     }}
-                    onPointerDown={handlePointerDown}
-                    onPointerMove={handlePointerMove}
-                    onPointerUp={handlePointerUp}
-                    onPointerLeave={handlePointerUp}
-                />
+                >
+                    {controlPanelData.channels.map(ch => (
+                        <DisplayOffsetTab
+                            key={ch.id}
+                            channel={ch}
+                            onUpdate={(updates) => handleChannelUpdate(ch.id, updates)}
+                            isFreqDomain={showFrequency}
+                        />
+                    ))}
+                </div>
 
-                {/* Overlay */}
-                <div style={{ color: 'white' }}>
-                    {showFrequency
-                        ? `Freq/Div: ${controlPanelData.freqPerUnit} Hz`
-                        : `Time/Div: ${controlPanelData.timePerUnit}s`
-                    }
-                </div>
-                <div style={{ color: 'white' }}>
-                    {showFrequency
-                        ? `Nyquist: ${(controlPanelData.TotalSignalSamples / (controlPanelData.timePerUnit * 10) / 2).toFixed(1)} Hz`
-                        : `Total Samples: ${controlPanelData.TotalSignalSamples}`
-                    }
-                </div>
-                {controlPanelData.channels.map(ch => ch.visible && (
-                    <div key={ch.id} style={{ color: ch.color }}>
+                {/* Main Display Area */}
+                <div className="scope-display" style={{ flex: 1, position: 'relative' }}>
+                    <div className="grid-background" />
+
+
+                    <svg
+                        ref={svgRef}
+                        viewBox={`0 0 ${widthUnits} ${heightUnits}`}
+                        className="signal-layer"
+                        preserveAspectRatio="none"
+                        style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0 }}
+                    >
+                        {signalList.map((sig) => (
+                            <DisplaySignal
+                                key={sig.id}
+                                displaySignalData={sig}
+                                setDisplaySignalData={(newData) => updateTimeData(sig.id, newData.timeData)}
+                                controlPanelData={controlPanelData}
+                            />
+                        ))}
+                        <DisplayCursor />
+                    </svg>
+
+                    {/* Transparent overlay for interaction to ensure we catch events on top of everything */}
+                    <div
+                        style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            width: '100%',
+                            height: '100%',
+                            cursor: cursor.active ? 'ew-resize' : 'default',
+                            touchAction: 'none' // Important for pointer events
+                        }}
+                        onPointerDown={handlePointerDown}
+                        onPointerMove={handlePointerMove}
+                        onPointerUp={handlePointerUp}
+                        onPointerLeave={handlePointerUp}
+                    />
+
+                    {/* Overlay */}
+                    <div style={{ color: 'white' }}>
                         {showFrequency
-                            ? `CH${ch.id + 1}: ${(ch.voltsPerUnitFreqDomain || 1).toPrecision(3)} Mag/Div`
-                            : `CH${ch.id + 1}: ${ch.voltsPerUnitTimeDomain} V/Div`
+                            ? `Freq/Div: ${controlPanelData.freqPerUnit} Hz`
+                            : `Time/Div: ${controlPanelData.timePerUnit}s`
                         }
                     </div>
-                ))}
+                    <div style={{ color: 'white' }}>
+                        {showFrequency
+                            ? `Nyquist: ${(controlPanelData.TotalSignalSamples / (controlPanelData.timePerUnit * 10) / 2).toFixed(1)} Hz`
+                            : `Total Samples: ${controlPanelData.TotalSignalSamples}`
+                        }
+                    </div>
+                    {controlPanelData.channels.map(ch => ch.visible && (
+                        <div key={ch.id} style={{ color: ch.color }}>
+                            {showFrequency
+                                ? `CH${ch.id + 1}: ${(ch.voltsPerUnitFreqDomain || 1).toPrecision(3)} Mag/Div`
+                                : `CH${ch.id + 1}: ${ch.voltsPerUnitTimeDomain} V/Div`
+                            }
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            {/* Bottom Area: X-Axis Labels */}
+            <div style={{
+                height: '25px',
+                position: 'relative',
+                marginLeft: '50px', // Match sidebar width
+                borderTop: '1px solid #333'
+            }}>
+                {renderXAxisLabels()}
             </div>
         </div>
     );
