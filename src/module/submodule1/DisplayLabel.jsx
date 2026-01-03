@@ -10,6 +10,8 @@ const DisplayLabel = ({ label }) => {
     const { x, y, channelId, id, isFreq, position } = label;
     const channelConfig = controlPanelData.channels.find(ch => ch.id === channelId);
 
+    if (channelConfig && !channelConfig.visible) return null;
+
     const color = channelConfig ? channelConfig.color : '#fff';
 
     if (isFreq !== !timeDomain) return null;

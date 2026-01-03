@@ -29,7 +29,7 @@ const ControlPanelTime = ({ controlPanelData, onUpdate, maxSamples, channelStats
     const labelScale = isTime ? "Time/Div" : "Freq/Div";
 
     // Constraints
-    const minScale = isTime ? 0.001 : 1;
+    const minScale = isTime ? 1e-9 : 1;
     const maxScale = isTime ? 100 : 10000000;
 
     // Offset logic
@@ -38,6 +38,17 @@ const ControlPanelTime = ({ controlPanelData, onUpdate, maxSamples, channelStats
     const offsetStep = currentValue * 0.1;
     const offsetMin = -currentValue * 100;
     const offsetMax = currentValue * 100;
+
+    const formatTime = (val) => {
+        if (!isTime) return val.toString();
+        const v = Math.abs(val);
+        if (v === 0) return "0";
+        if (v >= 1) return val.toFixed(3).replace(/\.?0+$/, "") + "s";
+        if (v >= 1e-3) return (val * 1e3).toFixed(3).replace(/\.?0+$/, "") + "ms";
+        if (v >= 1e-6) return (val * 1e6).toFixed(3).replace(/\.?0+$/, "") + "us";
+        if (v >= 1e-9) return (val * 1e9).toFixed(3).replace(/\.?0+$/, "") + "ns";
+        return (val * 1e12).toFixed(3).replace(/\.?0+$/, "") + "ps";
+    };
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -51,6 +62,7 @@ const ControlPanelTime = ({ controlPanelData, onUpdate, maxSamples, channelStats
                     min={minScale}
                     max={maxScale}
                     unit={unitScale}
+                    format={formatTime}
                 />
                 <Knob
                     label="Offset"
@@ -60,6 +72,7 @@ const ControlPanelTime = ({ controlPanelData, onUpdate, maxSamples, channelStats
                     min={offsetMin}
                     max={offsetMax}
                     unit={unitScale}
+                    format={formatTime}
                 />
                 <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
