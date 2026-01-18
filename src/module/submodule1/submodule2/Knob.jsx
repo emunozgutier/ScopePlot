@@ -19,7 +19,7 @@ const STEPS_1_2_5 = generateSteps();
 // Generate Power of 2 steps from 2^4 (16) to 2^17 (131072)
 const generatePowerOf2Steps = () => {
     const steps = [];
-    for (let exp = 4; exp <= 17; exp++) {
+    for (let exp = 4; exp <= 24; exp++) {
         steps.push(Math.pow(2, exp));
     }
     return steps;

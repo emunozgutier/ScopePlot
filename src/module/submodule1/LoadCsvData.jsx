@@ -100,9 +100,9 @@ const LoadCsvData = () => {
         // Sort by time? Usually expected.
         extractedData.sort((a, b) => a[0] - b[0]);
 
-        // Resampling Logic (Linear Interpolation) to 1024 points
+        // Resampling Logic (Linear Interpolation) to 10000 points
         const resampleData = (data, targetCount) => {
-            if (data.length < 2) return data;
+            if (data.length <= targetCount) return data;
 
             const output = [];
             const tStart = data[0][0];
@@ -145,15 +145,10 @@ const LoadCsvData = () => {
             return output;
         };
 
-        const resampledData = resampleData(extractedData, 1024);
+        const finalData = resampleData(extractedData, 10000);
 
         // Update Store
-        // We need to call useSignalStore.getState().updateTimeData(selectedChannel, extractedData)
-        // Or via hook if we exported action. We exported updateTimeData.
-
-        // Wait, I need to get the function from the hook component-side or reuse logic?
-        // useSignalStore is a hook.
-        useSignalStore.getState().updateTimeData(selectedChannel, resampledData);
+        useSignalStore.getState().updateTimeData(selectedChannel, finalData);
 
         // Ensure Channel is visible
         const channelConfig = controlPanelData.channels.find(c => c.id === selectedChannel);
@@ -236,7 +231,9 @@ const LoadCsvData = () => {
 
                 <div className="modal-actions">
                     <button className="btn-secondary" onClick={closeCsvModal}>Cancel</button>
-                    <button className="btn-primary" onClick={handleLoad} disabled={!fileStats}>Load Data</button>
+                    <button className="btn-primary" onClick={handleLoad} disabled={!fileStats}>
+                        Load Data {fileStats ? (fileStats.rows > 10000 ? '(10k pts)' : `(${fileStats.rows} pts)`) : ''}
+                    </button>
                 </div>
             </div>
         </div>

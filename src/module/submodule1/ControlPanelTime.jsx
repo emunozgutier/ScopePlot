@@ -84,7 +84,7 @@ const ControlPanelTime = ({ controlPanelData, onUpdate, maxSamples, channelStats
                             }}
                             stepType="powerOf2"
                             min={16}
-                            max={131072}
+                            max={Math.max(16, maxSamples || 16777216)}
                         />
                         {maxSamples && (
                             <div style={{ fontSize: '10px', color: '#aaa', marginTop: '2px' }}>
