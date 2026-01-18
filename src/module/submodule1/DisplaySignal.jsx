@@ -5,7 +5,7 @@ import DisplayPoint from './submodule2/DisplayPoint';
  * DisplaySignal Component
  * Renders an oscilloscope signal trace and its data points.
  */
-const DisplaySignal = ({ displaySignalData, setDisplaySignalData, controlPanelData }) => {
+const DisplaySignal = ({ displaySignalData, controlPanelData }) => {
     const { id } = displaySignalData;
     const channelConfig = controlPanelData.channels.find(ch => ch.id === id) || {};
     const {

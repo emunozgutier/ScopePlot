@@ -8,16 +8,12 @@ import DisplayLabel from './submodule1/DisplayLabel';
 import { useControlPanelStore } from '../stores/useControlPanelStore';
 import { useSignalStore } from '../stores/useSignalStore';
 
-import { defaultSignal } from '../utils/SignalGenerator';
+
 
 const Display = () => {
     const { controlPanelData, updateControlPanelData } = useControlPanelStore();
-    const { signalList, updateTimeData, cursor, setCursorIndex, labels, labelToolActive, addLabel } = useSignalStore();
+    const { signalList, cursor, setCursorIndex, labels, labelToolActive, addLabel } = useSignalStore();
 
-    const sidebarWidth = 50;
-
-    // Simulation Time Ref
-    const timeRef = useRef(0);
     const svgRef = useRef(null);
     const isDragging = useRef(false);
 
@@ -309,7 +305,6 @@ const Display = () => {
                             <DisplaySignal
                                 key={sig.id}
                                 displaySignalData={sig}
-                                setDisplaySignalData={(newData) => updateTimeData(sig.id, newData.timeData)}
                                 controlPanelData={controlPanelData}
                             />
                         ))}
