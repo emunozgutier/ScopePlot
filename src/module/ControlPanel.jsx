@@ -1,4 +1,3 @@
-import React from 'react';
 import classNames from 'classnames';
 import { performAutoSet } from '../utils/AutoSet';
 import ControlPanelTime from './submodule1/ControlPanelTime';
@@ -7,7 +6,6 @@ import CursorControlPanel from './submodule1/CursorControlPanel';
 import ControlLabels from './submodule1/ControlLabels';
 import { useControlPanelStore } from '../stores/useControlPanelStore';
 import { useSignalStore } from '../stores/useSignalStore';
-import { computeFFT } from '../utils/fft';
 import { findPeaks } from '../utils/FindPeak';
 
 const ControlPanel = () => {
