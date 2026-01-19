@@ -173,3 +173,93 @@ const DisplayLabel = ({ label }) => {
 };
 
 export default DisplayLabel;
+
+export const LabelOverlay = ({ widthUnits = 10, heightUnits = 8 }) => {
+    const { signalList, addLabel, labelToolActive } = useSignalStore();
+    const { controlPanelData } = useControlPanelStore();
+    const overlayRef = React.useRef(null);
+    const showFrequency = !controlPanelData.timeDomain;
+
+    if (!labelToolActive) return null;
+
+    const handlePointerDown = (e) => {
+        const overlay = overlayRef.current;
+        if (!overlay) return;
+
+        const rect = overlay.getBoundingClientRect();
+        const xPixels = e.clientX - rect.left;
+        const yPixels = e.clientY - rect.top;
+        const svgX = (xPixels / rect.width) * widthUnits;
+        const svgY = (yPixels / rect.height) * heightUnits;
+
+        // Find closest signal point
+        let closestDist = Infinity;
+        let closestPoint = null;
+        let closestChannelId = null;
+
+        controlPanelData.channels.forEach(ch => {
+            if (!ch.visible) return;
+            const sig = signalList.find(s => s.id === ch.id);
+            if (!sig) return;
+
+            const data = showFrequency ? sig.frequencyData : sig.timeData;
+            if (!data) return;
+
+            const scale = showFrequency ? (controlPanelData.freqPerUnit || 1) : (controlPanelData.timePerUnit || 1);
+            const offset = showFrequency ? (controlPanelData.freqOffset || 0) : (controlPanelData.timeOffset || 0);
+            const targetVal = svgX * scale - offset;
+
+            // Find closest index by X
+            let idx = 0;
+            let minXDist = Infinity;
+            for (let i = 0; i < data.length; i++) {
+                const d = Math.abs(data[i][0] - targetVal);
+                if (d < minXDist) { minXDist = d; idx = i; }
+            }
+
+            // Check Y distance in screen units
+            const point = data[idx];
+
+            let pointSvgY;
+            if (showFrequency) {
+                pointSvgY = 8 - ((point[1] * 10) + (ch.offsetFreqDomain || 0)) / (ch.voltsPerUnitFreqDomain || 1);
+            } else {
+                pointSvgY = 4 - (point[1] + (ch.offsetTimeDomain || 0)) / ch.voltsPerUnitTimeDomain;
+            }
+
+            const dist = Math.abs(svgY - pointSvgY);
+            if (dist < closestDist) {
+                closestDist = dist;
+                closestPoint = point;
+                closestChannelId = ch.id;
+            }
+        });
+
+        if (closestPoint) {
+            addLabel({
+                id: Date.now(),
+                x: closestPoint[0],
+                y: closestPoint[1],
+                channelId: closestChannelId,
+                isFreq: showFrequency
+            });
+        }
+    };
+
+    return (
+        <div
+            ref={overlayRef}
+            style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                cursor: 'crosshair',
+                touchAction: 'none'
+            }}
+            onPointerDown={handlePointerDown}
+        />
+    );
+};
+
