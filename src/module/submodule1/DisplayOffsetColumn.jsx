@@ -2,7 +2,7 @@ import React from 'react';
 import { useControlPanelStore } from '../../stores/useControlPanelStore';
 import DisplayOffsetTab from './submodule2/DisplayOffsetTab';
 
-const DisplayLabelColumn = () => {
+const DisplayOffsetColumn = () => {
     const { controlPanelData, updateControlPanelData } = useControlPanelStore();
     const showFrequency = !controlPanelData.timeDomain;
 
@@ -37,4 +37,4 @@ const DisplayLabelColumn = () => {
     );
 };
 
-export default DisplayLabelColumn;
+export default DisplayOffsetColumn;

@@ -1,5 +1,5 @@
 import React from 'react';
-import DisplayLabelColumn from './submodule1/DisplayLabelColumn';
+import DisplayOffsetColumn from './submodule1/DisplayOffsetColumn';
 import DisplayGraph from './submodule1/DisplayGraph';
 import DisplayAxis from './submodule1/DisplayAxis';
 
@@ -9,7 +9,7 @@ const Display = () => {
             {/* Top Area: Sidebar + Plot */}
             <div style={{ display: 'flex', flex: 1, minHeight: 0, position: 'relative' }}>
                 {/* Sidebar for Offset Tabs */}
-                <DisplayLabelColumn />
+                <DisplayOffsetColumn />
 
                 {/* Main Display Area */}
                 <DisplayGraph />
