@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
-import DisplaySignal from './DisplaySignal';
-import DisplayCursor from './DisplayCursor';
-import DisplayLabel from './DisplayLabel';
+import DisplaySignal from './submodule2/DisplaySignal';
+import DisplayCursor from './submodule2/DisplayCursor';
+import DisplayLabel from './submodule2/DisplayLabel';
 import { useControlPanelStore } from '../../stores/useControlPanelStore';
 import { useSignalStore } from '../../stores/useSignalStore';
 

@@ -1,6 +1,6 @@
 import React from 'react';
-import { useSignalStore } from '../../stores/useSignalStore';
-import { useControlPanelStore } from '../../stores/useControlPanelStore';
+import { useSignalStore } from '../../../stores/useSignalStore';
+import { useControlPanelStore } from '../../../stores/useControlPanelStore';
 
 const DisplayCursor = () => {
     const { cursor, signalList } = useSignalStore();

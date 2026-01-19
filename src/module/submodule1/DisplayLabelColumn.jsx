@@ -1,6 +1,6 @@
 import React from 'react';
 import { useControlPanelStore } from '../../stores/useControlPanelStore';
-import DisplayOffsetTab from './DisplayOffsetTab';
+import DisplayOffsetTab from './submodule2/DisplayOffsetTab';
 
 const DisplayLabelColumn = () => {
     const { controlPanelData, updateControlPanelData } = useControlPanelStore();
