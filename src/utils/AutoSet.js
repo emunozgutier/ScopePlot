@@ -67,7 +67,7 @@ export const performAutoSet = (controlPanelData, signalList) => {
 
             if (maxMag === 0) return ch;
 
-            let newVoltsPerUnit = (maxMag * 10) / 6;
+            let newVoltsPerUnit = (maxMag * 10) / 4.8;
             newVoltsPerUnit = snapTo125(newVoltsPerUnit);
 
             console.log(`CH${ch.id + 1} New Mag/Div: ${newVoltsPerUnit}`);
@@ -124,7 +124,7 @@ export const performAutoSet = (controlPanelData, signalList) => {
         const range = maxV - minV;
         const center = (maxV + minV) / 2;
 
-        let newVoltsPerUnit = range > 0 ? range / 6 : 1;
+        let newVoltsPerUnit = range > 0 ? range / 4.8 : 1;
         newVoltsPerUnit = snapTo125(newVoltsPerUnit);
 
         const newOffset = -center;
