@@ -1,5 +1,6 @@
 import React from 'react';
-import DisplaySignal from './submodule2/DisplaySignal';
+import DisplaySignalTime from './submodule2/DisplaySignalTime';
+import DisplaySignalFrequency from './submodule2/DisplaySignalFrequency';
 import DisplayCursor, { CursorOverlay } from './submodule2/DisplayCursor';
 import DisplayLabel, { LabelOverlay } from './submodule2/DisplayLabel';
 import { useControlPanelStore } from '../../stores/useControlPanelStore';
@@ -24,13 +25,28 @@ const DisplayGraph = () => {
                 preserveAspectRatio="none"
                 style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0 }}
             >
-                {signalList.map((sig) => (
-                    <DisplaySignal
-                        key={sig.id}
-                        displaySignalData={sig}
-                        controlPanelData={controlPanelData}
-                    />
-                ))}
+                {signalList.map((sig) => {
+                    const channelConfig = controlPanelData.channels.find(ch => ch.id === sig.id) || {};
+                    const { color, visible } = channelConfig;
+
+                    if (!visible) return null;
+
+                    return showFrequency ? (
+                        <DisplaySignalFrequency
+                            key={sig.id}
+                            displaySignalData={sig}
+                            controlPanelData={controlPanelData}
+                            color={color}
+                        />
+                    ) : (
+                        <DisplaySignalTime
+                            key={sig.id}
+                            displaySignalData={sig}
+                            controlPanelData={controlPanelData}
+                            color={color}
+                        />
+                    );
+                })}
                 <DisplayCursor />
             </svg>
             {labels.map(label => (
